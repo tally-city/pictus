@@ -69,8 +69,6 @@ class _HomePageState extends State<_HomePage> {
                     maxNumberOfImages: 4,
                     tools: [PhotoEditTool.crop, PhotoEditTool.draw],
                     defaultLensDirection: LensDirection.front,
-                    cropRatios: [CropRatio.r1_1, CropRatio.r7_5],
-                    forceCrop: true,
                   ).then((value) {
                     setState(() {
                       if (value != null) images = value;

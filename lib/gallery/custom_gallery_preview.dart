@@ -35,8 +35,6 @@ class CustomGalleryPreviewState extends State<CustomGalleryPreview> {
   final _previewImageIndex = ValueNotifier<int>(0);
   final _scrollController = ScrollController();
 
-  bool get _singleShotMode => widget.initialImages.length == 1;
-
   @override
   void initState() {
     _imageFiles = [...widget.initialImages];
@@ -195,7 +193,7 @@ class CustomGalleryPreviewState extends State<CustomGalleryPreview> {
                     ),
                   // hide images list in preview mode
                   Positioned(
-                    bottom: 90 + safeAreaPadding.bottom,
+                    bottom: 70 + safeAreaPadding.bottom,
                     child: SizedBox(
                       height: 80,
                       width: MediaQuery.sizeOf(context).width,
@@ -203,7 +201,7 @@ class CustomGalleryPreviewState extends State<CustomGalleryPreview> {
                         controller: _scrollController,
                         scrollDirection: Axis.horizontal,
                         itemCount: _imageFiles.length,
-                        padding: const EdgeInsets.only(left: 10, right: 0),
+                        padding: const EdgeInsets.only(left: 2, right: 0),
                         itemBuilder: (context, index) {
                           return ValueListenableBuilder(
                             valueListenable: _previewImageIndex,

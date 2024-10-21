@@ -37,18 +37,12 @@ class _EditPageState extends State<EditPage> {
   EditMode _mode = EditMode.preview;
   bool _isDirty = false;
   PhotoEditTool? _editMode;
-  CropRatio? _cropRatio;
   late XFile _image;
   final GlobalKey<CropperWidgetState> _cropWidget = GlobalKey();
   final GlobalKey<PainterWidgetState> _painterWidget = GlobalKey();
 
   @override
   void initState() {
-    if (widget.cropRatios.isEmpty) {
-      _cropRatio = CropRatio.free;
-    } else if (widget.cropRatios.length < CropRatio.values.length) {
-      _cropRatio = widget.cropRatios.first;
-    }
     if (widget.forceCrop) {
       _mode = EditMode.edit;
       _editMode = PhotoEditTool.crop;
@@ -87,9 +81,9 @@ class _EditPageState extends State<EditPage> {
           backgroundColor: Colors.black87,
           leading: TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(
-              _mode == EditMode.preview ? 'Cancel' : 'Discard',
-              style: const TextStyle(
+            child: const Text(
+              'Cancel',
+              style: TextStyle(
                 color: Colors.white,
               ),
             ),
@@ -119,7 +113,7 @@ class _EditPageState extends State<EditPage> {
                   }
                 },
                 child: Text(
-                  _mode == EditMode.preview ? 'Done' : 'Save',
+                  _mode == EditMode.edit && _editMode == PhotoEditTool.crop ? 'Crop' : 'Done',
                   style: const TextStyle(
                     color: Colors.white,
                   ),
@@ -154,7 +148,7 @@ class _EditPageState extends State<EditPage> {
                             case PhotoEditTool.crop:
                               return CropperWidget(
                                 bytes: snapshot.data!,
-                                cropRatio: _cropRatio,
+                                cropRatios: widget.cropRatios,
                                 key: _cropWidget,
                                 onCropped: (file) {
                                   setState(() {
@@ -187,7 +181,7 @@ class _EditPageState extends State<EditPage> {
                   return const Center(child: CircularProgressIndicator());
                 },
               ),
-        bottomNavigationBar: _editMode == PhotoEditTool.draw
+        bottomNavigationBar: _mode == EditMode.edit
             ? null
             : Container(
                 height: 80,
@@ -230,48 +224,12 @@ class _EditPageState extends State<EditPage> {
             )
         ];
       case EditMode.edit:
+        tools = [];
         switch (_editMode) {
           case null:
             tools = [];
           case PhotoEditTool.crop:
-            // if we only have one crop ratio, we force the user to crop in that ratio
-            final values = widget.cropRatios.length <= 1
-                ? widget.cropRatios.isEmpty
-                    ? CropRatio.values
-                    : []
-                : widget.cropRatios;
-            tools = values
-                .map(
-                  (ratio) => TextButton(
-                    onPressed: () {
-                      setState(() {
-                        _cropRatio = ratio;
-                      });
-                    },
-                    child: Column(
-                      children: [
-                        Icon(
-                          ratio.icon,
-                          color: ratio == _cropRatio ? Theme.of(context).colorScheme.primary : Colors.white,
-                        ),
-                        Text(
-                          ratio.title,
-                          style: TextStyle(
-                            color: ratio == _cropRatio ? Theme.of(context).colorScheme.primary : Colors.white,
-                          ),
-                        )
-                      ],
-                    ),
-                  ),
-                )
-                .toList();
-            return Center(
-              child: ListView(
-                shrinkWrap: true,
-                scrollDirection: Axis.horizontal,
-                children: tools,
-              ),
-            );
+            tools = [];
           case PhotoEditTool.draw:
             tools = [];
         }

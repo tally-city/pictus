@@ -149,51 +149,51 @@ class CustomCameraPreviewState extends State<CustomCameraPreview> {
                               ),
                             ),
                           ),
-                          if (_scaleFactor.value != 1.0)
-                            SafeArea(
-                              child: Container(
-                                padding: const EdgeInsets.all(12.0),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(8),
-                                    color: const Color.fromARGB(80, 0, 0, 0),
-                                  ),
-                                  padding: const EdgeInsets.all(6.0),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(
-                                        Icons.search,
-                                        size: 20,
-                                        color: Colors.white,
+                          ValueListenableBuilder(
+                              valueListenable: _scaleFactor,
+                              builder: (context, value, child) {
+                                if (_scaleFactor.value == 1.0) return const SizedBox.shrink();
+
+                                return SafeArea(
+                                  child: Container(
+                                    padding: const EdgeInsets.all(12.0),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(8),
+                                        color: const Color.fromARGB(80, 0, 0, 0),
                                       ),
-                                      ValueListenableBuilder(
-                                        valueListenable: _scaleFactor,
-                                        builder: (context, value, child) => Text(
-                                          '${(value > 1.0 && value < 1.1 ? 1.1 : value).toStringAsFixed(1)}x',
-                                          style: const TextStyle(
-                                            fontSize: 20,
+                                      padding: const EdgeInsets.all(6.0),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(
+                                            Icons.search,
+                                            size: 20,
                                             color: Colors.white,
-                                            decoration: TextDecoration.none,
                                           ),
-                                        ),
+                                          Text(
+                                            '${(value > 1.0 && value < 1.1 ? 1.1 : value).toStringAsFixed(1)}x',
+                                            style: const TextStyle(
+                                              fontSize: 20,
+                                              color: Colors.white,
+                                              decoration: TextDecoration.none,
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                    ],
+                                    ),
                                   ),
-                                ),
-                              ),
-                            )
+                                );
+                              })
                         ],
                       ),
                     ),
                   ),
                   if (widget.cameras.length > 1)
                     Positioned(
-                      bottom: 20,
-                      left: 20,
-                      child: FloatingActionButton(
-                        heroTag: "camera switch",
-                        backgroundColor: Theme.of(context).primaryColor,
+                      bottom: 25,
+                      left: 15,
+                      child: IconButton(
                         onPressed: () {
                           if (_cameraIndex < widget.cameras.length - 1) {
                             setState(() {
@@ -206,7 +206,7 @@ class CustomCameraPreviewState extends State<CustomCameraPreview> {
                           }
                           widget.cameraController.setDescription(widget.cameras[_cameraIndex]);
                         },
-                        child: const Icon(
+                        icon: const Icon(
                           Icons.cameraswitch,
                           color: Colors.white,
                         ),
@@ -221,7 +221,7 @@ class CustomCameraPreviewState extends State<CustomCameraPreview> {
                         bottom: 20,
                         child: FloatingActionButton(
                           heroTag: "camera",
-                          backgroundColor: Theme.of(context).primaryColor,
+                          backgroundColor: Colors.grey[800],
                           onPressed: takingPicture ? null : () => _handleCapture(),
                           child: takingPicture
                               ? const CircularProgressIndicator(
@@ -236,7 +236,7 @@ class CustomCameraPreviewState extends State<CustomCameraPreview> {
                     ),
                   // hide images list in preview mode
                   Positioned(
-                    bottom: 90 + MediaQuery.paddingOf(context).bottom,
+                    bottom: 80 + MediaQuery.paddingOf(context).bottom,
                     child: SizedBox(
                       height: 80,
                       width: MediaQuery.sizeOf(context).width,
@@ -244,7 +244,7 @@ class CustomCameraPreviewState extends State<CustomCameraPreview> {
                         controller: _scrollController,
                         scrollDirection: Axis.horizontal,
                         itemCount: _imageFiles.length,
-                        padding: const EdgeInsets.only(left: 10, right: 0),
+                        padding: const EdgeInsets.only(left: 2, right: 0),
                         itemBuilder: (context, index) {
                           return Container(
                             margin: const EdgeInsets.symmetric(horizontal: 2.0),
@@ -253,7 +253,7 @@ class CustomCameraPreviewState extends State<CustomCameraPreview> {
                                 GestureDetector(
                                   child: Image.memory(
                                     _thumbnails.value[index],
-                                    fit: BoxFit.cover,
+                                    fit: BoxFit.contain,
                                   ),
                                   onTap: () async {
                                     final editedImage = await Navigator.push(
