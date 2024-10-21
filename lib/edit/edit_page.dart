@@ -80,7 +80,7 @@ class _EditPageState extends State<EditPage> {
         appBar: AppBar(
           backgroundColor: Colors.black87,
           leading: TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: _status == Status.loading ? null : () => Navigator.pop(context),
             child: const Text(
               'Cancel',
               style: TextStyle(
@@ -199,24 +199,28 @@ class _EditPageState extends State<EditPage> {
         tools = [
           if (widget.editModes.contains(PhotoEditTool.crop))
             IconButton(
-                onPressed: () {
-                  setState(() {
-                    _mode = EditMode.edit;
-                    _editMode = PhotoEditTool.crop;
-                  });
-                },
+                onPressed: _status == Status.loading
+                    ? null
+                    : () {
+                        setState(() {
+                          _mode = EditMode.edit;
+                          _editMode = PhotoEditTool.crop;
+                        });
+                      },
                 icon: const Icon(
                   Icons.crop,
                   color: Colors.white,
                 )),
           if (!kIsWeb && widget.editModes.contains(PhotoEditTool.draw))
             IconButton(
-              onPressed: () {
-                setState(() {
-                  _mode = EditMode.edit;
-                  _editMode = PhotoEditTool.draw;
-                });
-              },
+              onPressed: _status == Status.loading
+                  ? null
+                  : () {
+                      setState(() {
+                        _mode = EditMode.edit;
+                        _editMode = PhotoEditTool.draw;
+                      });
+                    },
               icon: const Icon(
                 Icons.draw,
                 color: Colors.white,

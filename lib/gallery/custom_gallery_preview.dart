@@ -104,7 +104,7 @@ class CustomGalleryPreviewState extends State<CustomGalleryPreview> {
                       _processImages();
                     },
               child: const Text(
-                'Confirm',
+                'Done',
                 style: TextStyle(
                   color: Colors.white,
                 ),
