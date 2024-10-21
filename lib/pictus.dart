@@ -3,15 +3,21 @@ library pictus;
 import 'dart:io';
 
 import 'package:pictus/camera/camera.dart';
+import 'package:pictus/crop_ratio.dart';
 import 'package:pictus/gallery/custom_gallery_preview.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:pictus/lens_direction.dart';
 import 'photo_edit_tool.dart';
 
 export 'photo_edit_tool.dart';
 
 export 'package:image_picker/image_picker.dart' show XFile, ImageSource;
+
+export 'package:pictus/lens_direction.dart';
+
+export 'package:pictus/crop_ratio.dart';
 
 class Pictus {
   static Future<List<XFile>?> pickImage(
@@ -21,11 +27,17 @@ class Pictus {
     int? maxHeight,
     int maxNumberOfImages = 1,
     List<PhotoEditTool> tools = const [],
+    bool forceCrop = false,
+    List<CropRatio> cropRatios = const [],
+    LensDirection defaultLensDirection = LensDirection.back,
   }) {
+    if (kIsWeb) {
+      tools.removeWhere((element) => element == PhotoEditTool.draw);
+    }
     switch (source) {
       case ImageSource.camera:
         if (!kIsWeb && !Platform.isAndroid && !Platform.isIOS) {
-          throw Exception('Capture is not supported on this platform');
+          throw Exception('Camera is not supported on this platform');
         }
         return _capture(
           context: context,
@@ -33,6 +45,9 @@ class Pictus {
           maxHeight: maxHeight,
           maxNumberOfImages: maxNumberOfImages,
           tools: tools,
+          cropRatios: cropRatios,
+          forceCrop: forceCrop,
+          defaultLensDirection: defaultLensDirection,
         );
       case ImageSource.gallery:
         return _pickAndEdit(
@@ -41,6 +56,8 @@ class Pictus {
           maxHeight: maxHeight,
           maxWidth: maxWidth,
           tools: tools,
+          forceCrop: forceCrop,
+          cropRatios: cropRatios,
         );
     }
   }
@@ -51,6 +68,8 @@ class Pictus {
     int? maxWidth,
     int? maxHeight,
     List<PhotoEditTool> tools = const [],
+    List<CropRatio> cropRatios = const [],
+    bool forceCrop = false,
   }) async {
     final pickedImages = await _pick(
       context,
@@ -71,6 +90,8 @@ class Pictus {
           maxHeight: maxHeight,
           initialImages: pickedImages,
           tools: tools,
+          forceCrop: forceCrop,
+          cropRatios: cropRatios,
         ),
       ),
     );
@@ -104,6 +125,9 @@ class Pictus {
     int? maxHeight,
     int maxNumberOfImages = 1,
     List<PhotoEditTool> tools = const [],
+    List<CropRatio> cropRatios = const [],
+    bool forceCrop = false,
+    LensDirection defaultLensDirection = LensDirection.front,
   }) {
     return showGeneralDialog<List<XFile>>(
       context: context,
@@ -113,8 +137,10 @@ class Pictus {
           maxWidth: maxWidth,
           maxHeight: maxHeight,
           maxNumberOfImages: maxNumberOfImages,
-          canPop: true,
           tools: tools,
+          forceCrop: forceCrop,
+          cropRatios: cropRatios,
+          defaultLensDirection: defaultLensDirection,
         ),
       ),
     );

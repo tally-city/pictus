@@ -3,6 +3,8 @@ library pictus;
 import 'dart:developer';
 
 import 'package:pictus/camera/custom_camera_preview.dart';
+import 'package:pictus/crop_ratio.dart';
+import 'package:pictus/lens_direction.dart';
 import 'package:pictus/photo_edit_tool.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
@@ -11,86 +13,100 @@ import 'package:flutter/services.dart';
 
 class Camera extends StatefulWidget {
   final int maxNumberOfImages;
-  final bool? canPop;
   final List<PhotoEditTool> tools;
+  final bool forceCrop;
+  final List<CropRatio> cropRatios;
   final int? maxWidth;
   final int? maxHeight;
+  final LensDirection defaultLensDirection;
 
   const Camera({
     super.key,
     this.maxNumberOfImages = 1,
-    this.canPop,
     this.tools = const [],
     this.maxHeight,
     this.maxWidth,
+    this.cropRatios = const [],
+    this.forceCrop = false,
+    this.defaultLensDirection = LensDirection.back,
   });
 
   @override
   CameraState createState() => CameraState();
 }
 
-class CameraState extends State<Camera> with WidgetsBindingObserver {
+class CameraState extends State<Camera> {
   CameraController? _controller;
-  List? _cameras;
+  List<CameraDescription>? _cameras;
   late int _selectedCameraIdx;
-  bool _cameraError = false;
+  String? _cameraError;
   double? _minZoomLevel;
   double? _maxZoomLevel;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
-
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-    ]);
 
     availableCameras().then((availableCameras) {
       _cameras = availableCameras;
       if (_cameras != null && _cameras!.isNotEmpty) {
-        setState(() {
+        if (availableCameras.length == 1) {
           _selectedCameraIdx = 0;
-        });
+        } else {
+          setState(() {
+            _selectedCameraIdx = availableCameras.indexWhere(
+              (description) {
+                switch (widget.defaultLensDirection) {
+                  case LensDirection.front:
+                    return description.lensDirection == CameraLensDirection.front;
+                  case LensDirection.back:
+                    return description.lensDirection == CameraLensDirection.back;
+                }
+              },
+            );
+          });
+        }
         _initCameraController(_cameras![_selectedCameraIdx]).then((void v) {});
       } else {
-        log("No camera available");
+        log('No camera available');
         setState(() {
-          _cameraError = true;
+          _cameraError = 'No camera available';
         });
       }
     }).catchError((err) {
+      String errorMsg = 'No camera available';
       if (err is CameraException) {
+        if (err.description != null) errorMsg = err.description!;
         log('Error: ${err.code}\nError Message: ${err.description}');
       } else {
-        log("No camera available");
+        log(errorMsg);
       }
 
       setState(() {
-        _cameraError = true;
+        _cameraError = errorMsg;
       });
     });
-  }
-
-  @override
-  void didChangeMetrics() {
-    setState(() {});
   }
 
   Future _initCameraController(CameraDescription cameraDescription) async {
     if (_controller != null) {
       await _controller!.dispose();
     }
-    _controller = CameraController(cameraDescription, ResolutionPreset.high, enableAudio: false);
+    _controller = CameraController(
+      cameraDescription,
+      ResolutionPreset.low,
+      enableAudio: false,
+      imageFormatGroup: ImageFormatGroup.jpeg,
+    );
     _controller?.setFlashMode(FlashMode.auto);
 
     try {
       await _controller?.initialize();
     } on CameraException catch (e) {
       log('Camera Error ${e.code}: ${e.description}');
+      setState(() {
+        _cameraError = e.description ?? "Camera Error";
+      });
     }
     try {
       _minZoomLevel = await _controller?.getMinZoomLevel();
@@ -107,9 +123,10 @@ class CameraState extends State<Camera> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    if (_cameraError) {
-      if (widget.canPop!) {
-        Navigator.pop(context);
+    if (_cameraError != null) {
+      final navigator = Navigator.maybeOf(context);
+      if (navigator != null) {
+        navigator.pop();
       } else {
         return const Center(
           child: Text("Camera Error!"),
@@ -118,7 +135,7 @@ class CameraState extends State<Camera> with WidgetsBindingObserver {
     }
     if (_controller == null || !_controller!.value.isInitialized || _minZoomLevel == null || _maxZoomLevel == null) {
       return Container(
-        color: Colors.black,
+        color: Colors.black87,
         child: const Center(
             child: CircularProgressIndicator(
           color: Colors.red,
@@ -126,6 +143,10 @@ class CameraState extends State<Camera> with WidgetsBindingObserver {
       );
     }
     return CustomCameraPreview(
+      cameraIndex: _selectedCameraIdx,
+      forceCrop: widget.forceCrop,
+      cameras: _cameras!,
+      cropRatios: widget.cropRatios,
       maxWidth: widget.maxWidth,
       maxHeight: widget.maxHeight,
       maxNumberOfImages: widget.maxNumberOfImages,
@@ -139,7 +160,6 @@ class CameraState extends State<Camera> with WidgetsBindingObserver {
   @override
   void dispose() {
     _controller?.dispose();
-    WidgetsBinding.instance.removeObserver(this);
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,

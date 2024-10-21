@@ -46,8 +46,9 @@ class _HomePageState extends State<_HomePage> {
                 maxHeight: 1000,
                 maxWidth: 1000,
                 source: ImageSource.gallery,
-                tools: [PhotoEditTool.crop],
-                maxNumberOfImages: 3,
+                tools: [PhotoEditTool.crop, PhotoEditTool.draw],
+                forceCrop: true,
+                maxNumberOfImages: 4,
               ).then((value) {
                 setState(() {
                   if (value != null) images = value;
@@ -65,8 +66,11 @@ class _HomePageState extends State<_HomePage> {
                   Pictus.pickImage(
                     context,
                     source: ImageSource.camera,
-                    maxNumberOfImages: 2,
-                    tools: [PhotoEditTool.crop],
+                    maxNumberOfImages: 4,
+                    tools: [PhotoEditTool.crop, PhotoEditTool.draw],
+                    defaultLensDirection: LensDirection.front,
+                    cropRatios: [CropRatio.r1_1, CropRatio.r7_5],
+                    forceCrop: true,
                   ).then((value) {
                     setState(() {
                       if (value != null) images = value;

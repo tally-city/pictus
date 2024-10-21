@@ -1,18 +1,19 @@
 library pictus;
 
+import 'package:pictus/crop_ratio.dart';
 import 'package:pictus/photo_edit_tool.dart';
 import 'package:camera/camera.dart';
-import 'package:crop_your_image/crop_your_image.dart';
 import 'package:flutter/material.dart';
 import 'package:image/image.dart' as img;
+import 'package:pictus/edit/edit_page.dart';
 
 class CustomGalleryPreview extends StatefulWidget {
   final int? maxWidth;
   final int? maxHeight;
   final List<PhotoEditTool> tools;
-  final double? minZoomLevel;
-  final double? maxZoomLevel;
   final List<XFile> initialImages;
+  final bool forceCrop;
+  final List<CropRatio> cropRatios;
 
   const CustomGalleryPreview({
     required this.initialImages,
@@ -20,8 +21,8 @@ class CustomGalleryPreview extends StatefulWidget {
     this.maxWidth,
     this.maxHeight,
     this.tools = const [],
-    this.maxZoomLevel,
-    this.minZoomLevel,
+    this.forceCrop = false,
+    this.cropRatios = const [],
   });
 
   @override
@@ -31,21 +32,45 @@ class CustomGalleryPreview extends StatefulWidget {
 class CustomGalleryPreviewState extends State<CustomGalleryPreview> {
   bool _isProcessing = false;
   List<XFile> _imageFiles = [];
-  bool _isInEditMode = false;
-  int _previewImageIndex = 0;
+  final _previewImageIndex = ValueNotifier<int>(0);
   final _scrollController = ScrollController();
-  final _cropController = CropController();
 
   bool get _singleShotMode => widget.initialImages.length == 1;
 
   @override
   void initState() {
-    imageCache.clear();
-    imageCache.clearLiveImages();
     _imageFiles = [...widget.initialImages];
-    if (_singleShotMode) _isInEditMode = true;
-    _previewImageIndex = 0;
+    _previewImageIndex.value = 0;
+    _forceCrop();
     super.initState();
+  }
+
+  Future<void> _forceCrop() async {
+    if (widget.forceCrop && widget.tools.contains(PhotoEditTool.crop) && widget.initialImages.length == 1) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (timeStamp) async {
+          final editedImage = await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => EditPage(
+                cropRatios: widget.cropRatios,
+                image: _imageFiles[_previewImageIndex.value],
+                editModes: widget.tools,
+                forceCrop: true,
+              ),
+            ),
+          );
+          if (editedImage is XFile) {
+            setState(() {
+              _imageFiles[0] = editedImage;
+            });
+            _processImages();
+          } else {
+            Navigator.pop(context);
+          }
+        },
+      );
+    }
   }
 
   @override
@@ -56,18 +81,44 @@ class CustomGalleryPreviewState extends State<CustomGalleryPreview> {
 
   @override
   Widget build(BuildContext context) {
-    var safeAreaPadding = MediaQuery.of(context).padding;
-    return PopScope(
-      canPop: !_isInEditMode,
-      onPopInvokedWithResult: (didPop, result) {
-        if (!didPop) {
-          setState(() {
-            _isInEditMode = false;
-          });
-        }
-      },
-      child: Container(
-        color: Colors.black,
+    var safeAreaPadding = MediaQuery.paddingOf(context);
+    return Scaffold(
+      extendBodyBehindAppBar: true,
+      backgroundColor: Colors.black87,
+      appBar: AppBar(
+        leadingWidth: 100,
+        backgroundColor: Colors.transparent,
+        leading: TextButton(
+          onPressed: _isProcessing ? null : () => Navigator.pop(context),
+          child: const Text(
+            'Cancel',
+            style: TextStyle(
+              color: Colors.white,
+            ),
+          ),
+        ),
+        actions: [
+          if (_imageFiles.isNotEmpty)
+            TextButton(
+              onPressed: _isProcessing
+                  ? null
+                  : () {
+                      _processImages();
+                    },
+              child: const Text(
+                'Confirm',
+                style: TextStyle(
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          const SizedBox(width: 10),
+        ],
+      ),
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        color: Colors.black87,
         child: _isProcessing
             ? const Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -87,186 +138,136 @@ class CustomGalleryPreviewState extends State<CustomGalleryPreview> {
                 alignment: FractionalOffset.center,
                 children: <Widget>[
                   Positioned.fill(
-                    child: FutureBuilder(
-                      future: _imageFiles[_previewImageIndex].readAsBytes(),
-                      builder: (context, snapshot) {
-                        if (!snapshot.hasData || snapshot.connectionState != ConnectionState.done) {
-                          return const CircularProgressIndicator();
-                        }
-                        if (_isInEditMode) {
-                          return Crop(
-                            baseColor: Colors.black,
-                            initialSize: .5,
-                            aspectRatio: 1,
-                            controller: _cropController,
-                            onCropped: (value) async {
-                              var file = XFile.fromData(
-                                value,
-                              );
-                              setState(() {
-                                _isProcessing = false;
-                                _imageFiles[_previewImageIndex] = file;
-                                _isInEditMode = false;
-                              });
-                              if (_singleShotMode) {
-                                _processImages();
-                                return;
-                              }
-                            },
-                            image: snapshot.data!,
-                          );
-                        }
-                        return Image.memory(
-                          snapshot.data!,
-                          fit: BoxFit.contain,
-                        );
-                      },
+                    child: Container(
+                      color: Colors.black87,
+                      child: ValueListenableBuilder(
+                          valueListenable: _previewImageIndex,
+                          builder: (context, value, child) {
+                            return FutureBuilder(
+                              future: _imageFiles[value].readAsBytes(),
+                              builder: (context, snapshot) {
+                                if (!snapshot.hasData || snapshot.connectionState != ConnectionState.done) {
+                                  return const Center(
+                                    child: CircularProgressIndicator(),
+                                  );
+                                }
+                                return Image.memory(
+                                  snapshot.data!,
+                                  fit: BoxFit.contain,
+                                );
+                              },
+                            );
+                          }),
                     ),
                   ),
-                  // hide confirm button on no images
-                  _imageFiles.isEmpty
-                      ? Container()
-                      : Positioned(
-                          bottom: 20 + safeAreaPadding.bottom,
-                          right: 20 + safeAreaPadding.right,
-                          child: FloatingActionButton(
-                            heroTag: "confirm",
-                            backgroundColor: Colors.green,
-                            onPressed: () async {
-                              setState(() {
-                                _isProcessing = true;
-                              });
-                              if (_isInEditMode) {
-                                _cropController.crop();
-                              }
-                              if (_singleShotMode) {
-                                return;
-                              } else if (!_isInEditMode) {
-                                _processImages();
-                              }
-                            },
-                            child: const Icon(
-                              Icons.check,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                  Positioned(
-                    top: 20 + safeAreaPadding.top,
-                    left: 20 + safeAreaPadding.left,
-                    child: FloatingActionButton(
-                      // show delete icon in preview mode
-                      heroTag: "close",
-                      backgroundColor: Colors.black.withOpacity(.4),
-                      onPressed: () async {
-                        if (_isInEditMode && !_singleShotMode) {
-                          setState(() {
-                            _isInEditMode = false;
-                          });
-                          return;
-                        }
-                        Navigator.pop(context);
-                      },
-                      child: const Icon(
-                        Icons.close,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                  if (!_isInEditMode && widget.tools.contains(PhotoEditTool.crop))
+                  if (widget.tools.isNotEmpty)
                     Positioned(
                       bottom: 20 + safeAreaPadding.bottom,
                       left: 20 + safeAreaPadding.left,
-                      child: FloatingActionButton(
+                      child: TextButton.icon(
+                        label: const Text(
+                          'Edit',
+                          style: TextStyle(color: Colors.white),
+                        ),
                         // show delete icon in preview mode
-                        heroTag: "edit",
-                        backgroundColor: Colors.black.withOpacity(.3),
                         onPressed: () async {
-                          setState(() {
-                            _isInEditMode = true;
-                          });
+                          final editedImage = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => EditPage(
+                                cropRatios: widget.cropRatios,
+                                image: _imageFiles[_previewImageIndex.value],
+                                editModes: widget.tools,
+                              ),
+                            ),
+                          );
+                          if (editedImage is XFile) {
+                            setState(() {
+                              _imageFiles[_previewImageIndex.value] = editedImage;
+                            });
+                          }
                         },
-                        child: const Icon(
-                          Icons.crop,
+                        icon: const Icon(
+                          Icons.edit,
                           color: Colors.white,
                         ),
                       ),
                     ),
                   // hide images list in preview mode
-                  _isInEditMode || _singleShotMode
-                      ? Container()
-                      : Positioned(
-                          bottom: 80 + safeAreaPadding.bottom,
-                          child: SizedBox(
-                            height: 80,
-                            width: MediaQuery.of(context).size.width,
-                            child: ListView.builder(
-                              controller: _scrollController,
-                              scrollDirection: Axis.horizontal,
-                              itemCount: _imageFiles.length,
-                              padding: EdgeInsets.only(left: safeAreaPadding.left, right: safeAreaPadding.right),
-                              itemBuilder: (context, index) {
-                                return AnimatedContainer(
-                                  duration: const Duration(milliseconds: 200),
-                                  margin: const EdgeInsets.symmetric(horizontal: 2.0),
-                                  decoration: BoxDecoration(
-                                    border: Border.all(
-                                      width: 2.0,
-                                      color:
-                                          (_previewImageIndex == index ? Colors.green : Colors.white).withOpacity(.8),
-                                    ),
-                                  ),
-                                  child: Stack(
-                                    children: [
-                                      GestureDetector(
-                                        child: FutureBuilder(
-                                            future: _imageFiles[index].readAsBytes(),
-                                            builder: (context, snapshot) {
-                                              if (!snapshot.hasData) {
-                                                return const CircularProgressIndicator();
-                                              }
-                                              return Image.memory(
-                                                snapshot.data!,
-                                                fit: BoxFit.cover,
-                                                height: 100,
-                                                width: 100,
-                                                key: UniqueKey(),
-                                              );
-                                            }),
+                  Positioned(
+                    bottom: 90 + safeAreaPadding.bottom,
+                    child: SizedBox(
+                      height: 80,
+                      width: MediaQuery.sizeOf(context).width,
+                      child: ListView.builder(
+                        controller: _scrollController,
+                        scrollDirection: Axis.horizontal,
+                        itemCount: _imageFiles.length,
+                        padding: const EdgeInsets.only(left: 10, right: 0),
+                        itemBuilder: (context, index) {
+                          return ValueListenableBuilder(
+                            valueListenable: _previewImageIndex,
+                            builder: (context, value, child) {
+                              return AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                margin: const EdgeInsets.symmetric(horizontal: 2.0),
+                                decoration: value == index
+                                    ? BoxDecoration(
+                                        border: Border.all(
+                                          width: 2.0,
+                                          color: Theme.of(context).colorScheme.primary.withOpacity(.8),
+                                        ),
+                                      )
+                                    : null,
+                                child: child,
+                              );
+                            },
+                            child: Stack(
+                              children: [
+                                GestureDetector(
+                                  child: FutureBuilder(
+                                      future: _imageFiles[index].readAsBytes(),
+                                      builder: (context, snapshot) {
+                                        if (!snapshot.hasData || snapshot.connectionState != ConnectionState.done) {
+                                          return const CircularProgressIndicator();
+                                        }
+                                        return Image.memory(
+                                          snapshot.data!,
+                                          fit: BoxFit.cover,
+                                          height: 80,
+                                          width: 80,
+                                        );
+                                      }),
+                                  onTap: () {
+                                    _previewImageIndex.value = index;
+                                  },
+                                ),
+                                if (_imageFiles.length > 1)
+                                  Positioned(
+                                    top: 2,
+                                    right: 2,
+                                    child: Container(
+                                      height: 25,
+                                      width: 25,
+                                      decoration: const BoxDecoration(color: Color(0x99FFFFFF), shape: BoxShape.circle),
+                                      child: GestureDetector(
                                         onTap: () {
+                                          _previewImageIndex.value = 0;
                                           setState(() {
-                                            _previewImageIndex = index;
-                                            // _isInEditMode = true;
+                                            _imageFiles.removeAt(index);
                                           });
                                         },
+                                        child: const Icon(Icons.delete, size: 15, color: Colors.black87),
                                       ),
-                                      if (_imageFiles.length > 1)
-                                        Positioned(
-                                          top: 2,
-                                          right: 2,
-                                          child: Container(
-                                            height: 25,
-                                            width: 25,
-                                            decoration:
-                                                const BoxDecoration(color: Color(0x99FFFFFF), shape: BoxShape.circle),
-                                            child: GestureDetector(
-                                              onTap: () {
-                                                setState(() {
-                                                  _imageFiles.removeAt(index);
-                                                  _previewImageIndex = 0;
-                                                });
-                                              },
-                                              child: const Icon(Icons.delete, size: 15, color: Colors.black),
-                                            ),
-                                          ),
-                                        ),
-                                    ],
+                                    ),
                                   ),
-                                );
-                              },
+                              ],
                             ),
-                          ),
-                        ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
                 ],
               ),
       ),
@@ -296,7 +297,6 @@ class CustomGalleryPreviewState extends State<CustomGalleryPreview> {
     }
 
     setState(() {
-      _isInEditMode = false;
       _isProcessing = false;
     });
 
