@@ -287,7 +287,8 @@ class CustomGalleryPreviewState extends State<CustomGalleryPreview> {
           width: image.width > (widget.maxWidth ?? 0) ? widget.maxWidth : image.width,
           height: image.height > (widget.maxHeight ?? 0) ? widget.maxHeight : image.height,
         );
-        final newImage = XFile.fromData(img.encodeJpg(image));
+        final newImage =
+            XFile.fromData(img.encodeJpg(image), mimeType: 'image/jpeg', name: file.name, lastModified: DateTime.now());
         modifiedImages.add(newImage);
       } else {
         modifiedImages.add(file);

@@ -2,6 +2,7 @@ library pictus;
 
 import 'dart:io';
 
+import 'package:mime/mime.dart';
 import 'package:pictus/camera/camera.dart';
 import 'package:pictus/crop_ratio.dart';
 import 'package:pictus/gallery/custom_gallery_preview.dart';
@@ -71,12 +72,13 @@ class Pictus {
     List<CropRatio> cropRatios = const [],
     bool forceCrop = false,
   }) async {
-    final pickedImages = await _pick(
+    var pickedImages = await _pick(
       context,
       maxWidth: tools.isNotEmpty ? null : maxWidth,
       maxHeight: tools.isNotEmpty ? null : maxHeight,
       maxNumberOfImages: maxNumberOfImages,
     );
+    pickedImages = pickedImages?.map((image) => XFile(image.path, mimeType: lookupMimeType(image.path))).toList();
     if (tools.isEmpty || pickedImages == null || pickedImages.isEmpty) {
       return pickedImages;
     }
@@ -88,7 +90,7 @@ class Pictus {
         child: CustomGalleryPreview(
           maxWidth: maxWidth,
           maxHeight: maxHeight,
-          initialImages: pickedImages,
+          initialImages: pickedImages!,
           tools: tools,
           forceCrop: forceCrop,
           cropRatios: cropRatios,

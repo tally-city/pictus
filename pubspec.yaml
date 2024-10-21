@@ -15,6 +15,7 @@ dependencies:
   image: ^4.2.0
   image_painter: ^0.7.1
   image_picker: ^1.1.2
+  mime: ^2.0.0
 
 dev_dependencies:
   flutter_test:
