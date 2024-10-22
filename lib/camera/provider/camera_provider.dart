@@ -62,8 +62,11 @@ class CameraProvider extends ChangeNotifier {
     if (onImageTaken != null) {
       final editedImage = await onImageTaken(newImage);
       if (editedImage != null) {
-        imageFiles[imageFiles.length - 1] = editedImage;
+        imageFiles = [...imageFiles];
+        imageFiles.removeLast();
+        imageFiles = [...imageFiles, editedImage];
       } else {
+        imageFiles = [...imageFiles];
         imageFiles.removeLast();
       }
       notifyListeners();

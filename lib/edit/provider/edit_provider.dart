@@ -1,15 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:pictus/edit/forced_operations.dart';
 import 'package:pictus/pictus.dart';
 
 class EditProvider extends ChangeNotifier {
   EditProvider({
     required XFile initialImage,
-  }) : image = initialImage;
+    this.forcedOperations,
+  }) : image = initialImage {
+    if (forcedOperations != null) {
+      forcedOperationStep = 0;
+      pageMode = PageMode.edit;
+      editMode = forcedOperations!.operationsInOrder[forcedOperationStep!];
+    }
+  }
 
   XFile image;
   Status status = Status.loaded;
   PageMode pageMode = PageMode.preview;
   PhotoEditTool? editMode;
+  int? forcedOperationStep;
+  final ForcedOperations? forcedOperations;
 
   void switchPageMode({PageMode? pageMode, PhotoEditTool? editMode}) {
     this.pageMode = pageMode ?? this.pageMode;
@@ -43,14 +53,29 @@ class EditProvider extends ChangeNotifier {
 
   void onOperationFinished(
     XFile? image, {
-    void Function(XFile image)? afterFinishedOperation,
+    bool shouldShowPreviewInTheEnd = false,
+    void Function(XFile image)? onForcedOperationFinished,
   }) {
-    if (image == null) return;
     status = Status.loaded;
-    pageMode = PageMode.preview;
-    this.image = image;
+    if (image != null) {
+      this.image = image;
+    }
+
     notifyListeners();
-    afterFinishedOperation?.call(image);
+    if (forcedOperations == null || forcedOperationStep == forcedOperations!.operationsInOrder.length - 1) {
+      // if we are ate the end of the forced operations, we switch to the preview mode
+      pageMode = PageMode.preview;
+      if (!shouldShowPreviewInTheEnd) {
+        // if we should skip the preview, we do the on finished operations func (pop the route with latest image)
+        onForcedOperationFinished?.call(this.image);
+      }
+    } else {
+      // else we switch to the next operation step
+      forcedOperationStep = forcedOperationStep! + 1;
+      editMode = forcedOperations!.operationsInOrder[forcedOperationStep!];
+    }
+    notifyListeners();
+
   }
 }
 

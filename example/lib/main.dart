@@ -68,6 +68,7 @@ class _HomePageState extends State<_HomePage> {
                     source: ImageSource.camera,
                     maxNumberOfImages: 4,
                     availableTools: [PhotoEditTool.crop, PhotoEditTool.draw],
+                    forcedOperationsInOrder: [PhotoEditTool.crop, PhotoEditTool.draw],
                     defaultLensDirection: LensDirection.front,
                   ).then((value) {
                     setState(() {

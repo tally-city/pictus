@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:pictus/crop_ratio.dart';
 import 'package:pictus/edit/cropper_widget.dart';
+import 'package:pictus/edit/forced_operations.dart';
 import 'package:pictus/edit/painter_widget.dart';
 import 'package:pictus/edit/provider/edit_provider.dart';
 import 'package:pictus/pictus.dart';
@@ -12,15 +12,13 @@ class EditPage extends StatefulWidget {
     required this.image,
     this.cropRatios = const [],
     this.editModes = const [],
-    this.forcedOperationsInOrder = const [],
-    this.showPreviewAfterOperations = false,
+    this.forcedOperations,
     super.key,
   });
   final XFile image;
   final List<CropRatio> cropRatios;
   final List<PhotoEditTool> editModes;
-  final List<PhotoEditTool> forcedOperationsInOrder;
-  final bool showPreviewAfterOperations;
+  final ForcedOperations? forcedOperations;
 
   @override
   State<EditPage> createState() => _EditPageState();
@@ -40,24 +38,18 @@ class _EditPageState extends State<EditPage> {
     return ChangeNotifierProvider(
       create: (_) => EditProvider(
         initialImage: widget.image,
+        forcedOperations: widget.forcedOperations,
       ),
       child: Builder(builder: (context) {
         return PopScope(
           canPop: false,
           onPopInvokedWithResult: (didPop, result) async {
-            final status = context.read<EditProvider>().status;
-            final pageMode = context.read<EditProvider>().pageMode;
             if (didPop) {
               return;
             }
-            if (status == Status.loading) return;
-
-            if (pageMode == PageMode.edit) {
-              context.read<EditProvider>().switchPageMode(pageMode: PageMode.preview, editMode: null);
-              return;
+            if (_canPop(context)) {
+              Navigator.pop(context, result);
             }
-
-            Navigator.pop(context, result);
           },
           child: Scaffold(
             appBar: AppBar(
@@ -65,7 +57,11 @@ class _EditPageState extends State<EditPage> {
               leading: TextButton(
                 onPressed: context.select<EditProvider, Status>((value) => value.status) == Status.loading
                     ? null
-                    : () => Navigator.pop(context),
+                    : () {
+                        if (_canPop(context)) {
+                          Navigator.pop(context);
+                        }
+                      },
                 child: const Text(
                   'Cancel',
                   style: TextStyle(
@@ -122,7 +118,7 @@ class _EditPageState extends State<EditPage> {
                                 cropRatios: widget.cropRatios,
                                 onCropped: (croppedImage) => provider.onOperationFinished(
                                   croppedImage,
-                                  afterFinishedOperation: (image) => Navigator.pop(context, image),
+                                  onForcedOperationFinished: (image) => Navigator.pop(context, image),
                                 ),
                               );
                             case PhotoEditTool.draw:
@@ -131,7 +127,7 @@ class _EditPageState extends State<EditPage> {
                                 bytes: snapshot.data!,
                                 onPaintFinished: (paintedImage) => provider.onOperationFinished(
                                   paintedImage,
-                                  afterFinishedOperation: (image) => Navigator.pop(context, image),
+                                  onForcedOperationFinished: (image) => Navigator.pop(context, image),
                                 ),
                               );
                           }
@@ -189,29 +185,16 @@ class _EditPageState extends State<EditPage> {
     );
   }
 
-  Future<bool?> _showDialog() {
-    return showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Are you sure?'),
-          content: const Text('Any unsaved changes will be lost!'),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Yes, discard my changes'),
-              onPressed: () {
-                Navigator.pop(context, true);
-              },
-            ),
-            TextButton(
-              child: const Text('No, continue editing'),
-              onPressed: () {
-                Navigator.pop(context, false);
-              },
-            ),
-          ],
-        );
-      },
-    );
+  bool _canPop(BuildContext context) {
+    final status = context.read<EditProvider>().status;
+    final pageMode = context.read<EditProvider>().pageMode;
+    if (status == Status.loading) return false;
+
+    if (pageMode == PageMode.edit) {
+      context.read<EditProvider>().switchPageMode(pageMode: PageMode.preview, editMode: null);
+      return false;
+    }
+
+    return true;
   }
 }

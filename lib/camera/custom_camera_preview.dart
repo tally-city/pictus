@@ -4,6 +4,7 @@ import 'dart:developer';
 
 import 'package:pictus/camera/provider/camera_provider.dart';
 import 'package:pictus/crop_ratio.dart';
+import 'package:pictus/edit/forced_operations.dart';
 import 'package:pictus/photo_edit_tool.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
@@ -270,7 +271,7 @@ class CustomCameraPreviewState extends State<CustomCameraPreview> {
                                               cropRatios: widget.cropRatios,
                                               image: imageFiles[index],
                                               editModes: widget.tools,
-                                              forcedOperationsInOrder: widget.forcedOperationsInOrder,
+                                              forcedOperations: null,
                                             ),
                                           ),
                                         );
@@ -323,8 +324,10 @@ class CustomCameraPreviewState extends State<CustomCameraPreview> {
                         image: image,
                         cropRatios: widget.cropRatios,
                         editModes: widget.tools,
-                        showPreviewAfterOperations: false,
-                        forcedOperationsInOrder: widget.forcedOperationsInOrder,
+                        forcedOperations: ForcedOperations(
+                          operationsInOrder: widget.forcedOperationsInOrder,
+                          showPreviewAfterOperations: widget.maxNumberOfImages == 1,
+                        ),
                       ),
                     ),
                   );
