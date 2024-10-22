@@ -10,9 +10,10 @@ import 'package:pictus/edit/edit_page.dart';
 class CustomGalleryPreview extends StatefulWidget {
   final int? maxWidth;
   final int? maxHeight;
-  final List<PhotoEditTool> tools;
+  final List<PhotoEditTool> availableTools;
+  final List<PhotoEditTool> forcedOperationsInOrder;
+
   final List<XFile> initialImages;
-  final bool forceCrop;
   final List<CropRatio> cropRatios;
 
   const CustomGalleryPreview({
@@ -20,8 +21,8 @@ class CustomGalleryPreview extends StatefulWidget {
     super.key,
     this.maxWidth,
     this.maxHeight,
-    this.tools = const [],
-    this.forceCrop = false,
+    this.availableTools = const [],
+    this.forcedOperationsInOrder = const [],
     this.cropRatios = const [],
   });
 
@@ -44,7 +45,7 @@ class CustomGalleryPreviewState extends State<CustomGalleryPreview> {
   }
 
   Future<void> _forceCrop() async {
-    if (widget.forceCrop && widget.tools.contains(PhotoEditTool.crop) && widget.initialImages.length == 1) {
+    if (widget.forcedOperationsInOrder.isNotEmpty && widget.initialImages.length == 1) {
       WidgetsBinding.instance.addPostFrameCallback(
         (timeStamp) async {
           final editedImage = await Navigator.push(
@@ -53,8 +54,8 @@ class CustomGalleryPreviewState extends State<CustomGalleryPreview> {
               builder: (context) => EditPage(
                 cropRatios: widget.cropRatios,
                 image: _imageFiles[_previewImageIndex.value],
-                editModes: widget.tools,
-                forceCrop: true,
+                editModes: widget.availableTools,
+                // forceCrops: true,
               ),
             ),
           );
@@ -158,7 +159,7 @@ class CustomGalleryPreviewState extends State<CustomGalleryPreview> {
                           }),
                     ),
                   ),
-                  if (widget.tools.isNotEmpty)
+                  if (widget.availableTools.isNotEmpty)
                     Positioned(
                       bottom: 20 + safeAreaPadding.bottom,
                       left: 20 + safeAreaPadding.left,
@@ -175,7 +176,7 @@ class CustomGalleryPreviewState extends State<CustomGalleryPreview> {
                               builder: (context) => EditPage(
                                 cropRatios: widget.cropRatios,
                                 image: _imageFiles[_previewImageIndex.value],
-                                editModes: widget.tools,
+                                editModes: widget.availableTools,
                               ),
                             ),
                           );

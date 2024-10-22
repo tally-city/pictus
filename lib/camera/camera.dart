@@ -3,6 +3,7 @@ library pictus;
 import 'dart:developer';
 
 import 'package:pictus/camera/custom_camera_preview.dart';
+import 'package:pictus/camera/provider/camera_provider.dart';
 import 'package:pictus/crop_ratio.dart';
 import 'package:pictus/lens_direction.dart';
 import 'package:pictus/photo_edit_tool.dart';
@@ -10,10 +11,12 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 
 class Camera extends StatefulWidget {
   final int maxNumberOfImages;
-  final List<PhotoEditTool> tools;
+  final List<PhotoEditTool> availableTools;
+  final List<PhotoEditTool> forcedOperationsInOrder;
   final bool forceCrop;
   final List<CropRatio> cropRatios;
   final int? maxWidth;
@@ -23,7 +26,8 @@ class Camera extends StatefulWidget {
   const Camera({
     super.key,
     this.maxNumberOfImages = 1,
-    this.tools = const [],
+    this.availableTools = const [],
+    this.forcedOperationsInOrder = const [],
     this.maxHeight,
     this.maxWidth,
     this.cropRatios = const [],
@@ -142,18 +146,19 @@ class CameraState extends State<Camera> {
         )),
       );
     }
-    return CustomCameraPreview(
-      cameraIndex: _selectedCameraIdx,
-      forceCrop: widget.forceCrop,
-      cameras: _cameras!,
-      cropRatios: widget.cropRatios,
-      maxWidth: widget.maxWidth,
-      maxHeight: widget.maxHeight,
-      maxNumberOfImages: widget.maxNumberOfImages,
-      tools: widget.tools,
-      cameraController: _controller!,
-      minZoomLevel: _minZoomLevel,
-      maxZoomLevel: _maxZoomLevel,
+    return ChangeNotifierProvider(
+      create: (_) => CameraProvider(initialCameraIndex: _selectedCameraIdx, cameras: _cameras!),
+      child: CustomCameraPreview(
+        cropRatios: widget.cropRatios,
+        maxWidth: widget.maxWidth,
+        maxHeight: widget.maxHeight,
+        maxNumberOfImages: widget.maxNumberOfImages,
+        tools: widget.availableTools,
+        forcedOperationsInOrder: widget.forcedOperationsInOrder,
+        cameraController: _controller!,
+        minZoomLevel: _minZoomLevel,
+        maxZoomLevel: _maxZoomLevel,
+      ),
     );
   }
 

@@ -46,8 +46,8 @@ class _HomePageState extends State<_HomePage> {
                 maxHeight: 1000,
                 maxWidth: 1000,
                 source: ImageSource.gallery,
-                tools: [PhotoEditTool.crop, PhotoEditTool.draw],
-                forceCrop: true,
+                availableTools: [PhotoEditTool.crop, PhotoEditTool.draw],
+                forcedOperationsInOrder: [PhotoEditTool.crop, PhotoEditTool.draw],
                 maxNumberOfImages: 4,
               ).then((value) {
                 setState(() {
@@ -67,7 +67,7 @@ class _HomePageState extends State<_HomePage> {
                     context,
                     source: ImageSource.camera,
                     maxNumberOfImages: 4,
-                    tools: [PhotoEditTool.crop, PhotoEditTool.draw],
+                    availableTools: [PhotoEditTool.crop, PhotoEditTool.draw],
                     defaultLensDirection: LensDirection.front,
                   ).then((value) {
                     setState(() {

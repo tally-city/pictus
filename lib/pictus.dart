@@ -27,13 +27,14 @@ class Pictus {
     int? maxWidth,
     int? maxHeight,
     int maxNumberOfImages = 1,
-    List<PhotoEditTool> tools = const [],
-    bool forceCrop = false,
+    List<PhotoEditTool> availableTools = const [],
+    List<PhotoEditTool> forcedOperationsInOrder = const [],
     List<CropRatio> cropRatios = const [],
     LensDirection defaultLensDirection = LensDirection.back,
   }) {
     if (kIsWeb) {
-      tools.removeWhere((element) => element == PhotoEditTool.draw);
+      availableTools.removeWhere((element) => element == PhotoEditTool.draw);
+      forcedOperationsInOrder.removeWhere((element) => element == PhotoEditTool.draw);
     }
     switch (source) {
       case ImageSource.camera:
@@ -45,9 +46,9 @@ class Pictus {
           maxWidth: maxWidth,
           maxHeight: maxHeight,
           maxNumberOfImages: maxNumberOfImages,
-          tools: tools,
+          availableTools: availableTools,
+          forcedOperationsInOrder: forcedOperationsInOrder,
           cropRatios: cropRatios,
-          forceCrop: forceCrop,
           defaultLensDirection: defaultLensDirection,
         );
       case ImageSource.gallery:
@@ -56,8 +57,8 @@ class Pictus {
           maxNumberOfImages: maxNumberOfImages,
           maxHeight: maxHeight,
           maxWidth: maxWidth,
-          tools: tools,
-          forceCrop: forceCrop,
+          tools: availableTools,
+          forcedOperationsInOrder: forcedOperationsInOrder,
           cropRatios: cropRatios,
         );
     }
@@ -69,8 +70,8 @@ class Pictus {
     int? maxWidth,
     int? maxHeight,
     List<PhotoEditTool> tools = const [],
+    List<PhotoEditTool> forcedOperationsInOrder = const [],
     List<CropRatio> cropRatios = const [],
-    bool forceCrop = false,
   }) async {
     var pickedImages = await _pick(
       context,
@@ -91,8 +92,8 @@ class Pictus {
           maxWidth: maxWidth,
           maxHeight: maxHeight,
           initialImages: pickedImages!,
-          tools: tools,
-          forceCrop: forceCrop,
+          forcedOperationsInOrder: forcedOperationsInOrder,
+          availableTools: tools,
           cropRatios: cropRatios,
         ),
       ),
@@ -126,9 +127,9 @@ class Pictus {
     int? maxWidth,
     int? maxHeight,
     int maxNumberOfImages = 1,
-    List<PhotoEditTool> tools = const [],
+    List<PhotoEditTool> availableTools = const [],
+    List<PhotoEditTool> forcedOperationsInOrder = const [],
     List<CropRatio> cropRatios = const [],
-    bool forceCrop = false,
     LensDirection defaultLensDirection = LensDirection.front,
   }) {
     return showGeneralDialog<List<XFile>>(
@@ -139,8 +140,8 @@ class Pictus {
           maxWidth: maxWidth,
           maxHeight: maxHeight,
           maxNumberOfImages: maxNumberOfImages,
-          tools: tools,
-          forceCrop: forceCrop,
+          availableTools: availableTools,
+          forcedOperationsInOrder: forcedOperationsInOrder,
           cropRatios: cropRatios,
           defaultLensDirection: defaultLensDirection,
         ),
