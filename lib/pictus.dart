@@ -75,8 +75,8 @@ class Pictus {
   }) async {
     var pickedImages = await _pick(
       context,
-      maxWidth: tools.isNotEmpty ? null : maxWidth,
-      maxHeight: tools.isNotEmpty ? null : maxHeight,
+      maxWidth: maxWidth,
+      maxHeight: maxHeight,
       maxNumberOfImages: maxNumberOfImages,
     );
     pickedImages = pickedImages?.map((image) => XFile(image.path, mimeType: lookupMimeType(image.path))).toList();
@@ -89,10 +89,8 @@ class Pictus {
       barrierDismissible: false,
       pageBuilder: (_, __, ___) => Material(
         child: CustomGalleryPreview(
-          maxWidth: maxWidth,
-          maxHeight: maxHeight,
           initialImages: pickedImages!,
-          forcedOperationsInOrder: forcedOperationsInOrder,
+          forcedOperationsInOrder: maxNumberOfImages == 1 ? forcedOperationsInOrder : [],
           availableTools: tools,
           cropRatios: cropRatios,
         ),

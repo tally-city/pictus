@@ -87,51 +87,56 @@ class _EditPageState extends State<EditPage> {
             ),
             backgroundColor: Colors.black87,
             body: Consumer<EditProvider>(
-              builder: (context, provider, child) => FutureBuilder(
-                future: provider.image.readAsBytes(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.done) {
-                    if (snapshot.hasData) {
-                      switch (provider.pageMode) {
-                        case PageMode.preview:
-                          return Center(
-                            child: Image.memory(
-                              snapshot.data!,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                            ),
-                          );
-                        case PageMode.edit:
-                          switch (provider.editMode) {
-                            case null:
-                              return Container();
-                            case PhotoEditTool.crop:
-                              return CropperWidget(
-                                key: _cropWidget,
-                                bytes: snapshot.data!,
-                                cropRatios: widget.cropRatios,
-                                onCropped: (croppedImage) => provider.onOperationFinished(
-                                  croppedImage,
-                                  onForcedOperationFinished: (image) => Navigator.pop(context, image),
-                                ),
-                              );
-                            case PhotoEditTool.draw:
-                              return PainterWidget(
-                                key: _painterWidget,
-                                bytes: snapshot.data!,
-                                onPaintFinished: (paintedImage) => provider.onOperationFinished(
-                                  paintedImage,
-                                  onForcedOperationFinished: (image) => Navigator.pop(context, image),
-                                ),
-                              );
-                          }
+              builder: (context, provider, child) {
+                if (provider.status == Status.loading) {
+                  return Center(child: CircularProgressIndicator());
+                }
+                return FutureBuilder(
+                  future: provider.image.readAsBytes(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.done) {
+                      if (snapshot.hasData) {
+                        switch (provider.pageMode) {
+                          case PageMode.preview:
+                            return Center(
+                              child: Image.memory(
+                                snapshot.data!,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                              ),
+                            );
+                          case PageMode.edit:
+                            switch (provider.editMode) {
+                              case null:
+                                return Container();
+                              case PhotoEditTool.crop:
+                                return CropperWidget(
+                                  key: _cropWidget,
+                                  bytes: snapshot.data!,
+                                  cropRatios: widget.cropRatios,
+                                  onCropped: (croppedImage) => provider.onOperationFinished(
+                                    croppedImage,
+                                    onForcedOperationFinished: (image) => Navigator.pop(context, image),
+                                  ),
+                                );
+                              case PhotoEditTool.draw:
+                                return PainterWidget(
+                                  key: _painterWidget,
+                                  bytes: snapshot.data!,
+                                  onPaintFinished: (paintedImage) => provider.onOperationFinished(
+                                    paintedImage,
+                                    onForcedOperationFinished: (image) => Navigator.pop(context, image),
+                                  ),
+                                );
+                            }
+                        }
                       }
+                      return const Center(child: Text('Failed to load image'));
                     }
-                    return const Center(child: Text('Failed to load image'));
-                  }
-                  return const Center(child: CircularProgressIndicator());
-                },
-              ),
+                    return const Center(child: CircularProgressIndicator());
+                  },
+                );
+              },
             ),
             bottomNavigationBar: context.select<EditProvider, PageMode>((value) => value.pageMode) == PageMode.edit
                 ? null

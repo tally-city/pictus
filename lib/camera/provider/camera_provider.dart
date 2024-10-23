@@ -79,6 +79,7 @@ class CameraProvider extends ChangeNotifier {
     int? maxHeight,
   }) async {
     isProcessing = true;
+    notifyListeners();
 
     final modifiedImages = <XFile>[];
     for (final file in imageFiles) {
@@ -97,6 +98,8 @@ class CameraProvider extends ChangeNotifier {
     }
 
     isProcessing = false;
+    notifyListeners();
+
     onProcessFinished(modifiedImages);
   }
 
