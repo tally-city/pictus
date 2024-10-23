@@ -6,6 +6,7 @@ class EditProvider extends ChangeNotifier {
   EditProvider({
     required XFile initialImage,
     this.forcedOperations,
+    this.onForcedOperationFinished,
   }) : image = initialImage {
     if (forcedOperations != null) {
       forcedOperationStep = 0;
@@ -20,6 +21,7 @@ class EditProvider extends ChangeNotifier {
   PhotoEditTool? editMode;
   int? forcedOperationStep;
   final ForcedOperations? forcedOperations;
+  final void Function(XFile image)? onForcedOperationFinished;
 
   void switchPageMode({PageMode? pageMode, PhotoEditTool? editMode}) {
     this.pageMode = pageMode ?? this.pageMode;
@@ -51,10 +53,7 @@ class EditProvider extends ChangeNotifier {
     }
   }
 
-  void onOperationFinished(
-    XFile? image, {
-    void Function(XFile image)? onForcedOperationFinished,
-  }) {
+  void onOperationFinished(XFile? image) {
     status = Status.loaded;
     if (image != null) {
       this.image = image;

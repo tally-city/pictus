@@ -40,6 +40,7 @@ class _EditPageState extends State<EditPage> {
       create: (_) => EditProvider(
         initialImage: widget.image,
         forcedOperations: widget.forcedOperations,
+        onForcedOperationFinished: (image) => Navigator.pop(context, image),
       ),
       child: Builder(builder: (context) {
         return PopScope(
@@ -116,7 +117,6 @@ class _EditPageState extends State<EditPage> {
                                   cropRatios: widget.cropRatios,
                                   onCropped: (croppedImage) => provider.onOperationFinished(
                                     croppedImage,
-                                    onForcedOperationFinished: (image) => Navigator.pop(context, image),
                                   ),
                                 );
                               case PhotoEditTool.draw:
@@ -125,7 +125,6 @@ class _EditPageState extends State<EditPage> {
                                   bytes: snapshot.data!,
                                   onPaintFinished: (paintedImage) => provider.onOperationFinished(
                                     paintedImage,
-                                    onForcedOperationFinished: (image) => Navigator.pop(context, image),
                                   ),
                                 );
                             }
