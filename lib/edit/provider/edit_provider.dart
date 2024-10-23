@@ -53,7 +53,6 @@ class EditProvider extends ChangeNotifier {
 
   void onOperationFinished(
     XFile? image, {
-    bool shouldShowPreviewInTheEnd = false,
     void Function(XFile image)? onForcedOperationFinished,
   }) {
     status = Status.loaded;
@@ -65,7 +64,7 @@ class EditProvider extends ChangeNotifier {
     if (forcedOperations == null || forcedOperationStep == forcedOperations!.operationsInOrder.length - 1) {
       // if we are ate the end of the forced operations, we switch to the preview mode
       pageMode = PageMode.preview;
-      if (!shouldShowPreviewInTheEnd) {
+      if (!(forcedOperations?.showPreviewAfterOperations ?? true)) {
         // if we should skip the preview, we do the on finished operations func (pop the route with latest image)
         onForcedOperationFinished?.call(this.image);
       }
@@ -75,7 +74,6 @@ class EditProvider extends ChangeNotifier {
       editMode = forcedOperations!.operationsInOrder[forcedOperationStep!];
     }
     notifyListeners();
-
   }
 }
 

@@ -66,9 +66,9 @@ class _HomePageState extends State<_HomePage> {
                   Pictus.pickImage(
                     context,
                     source: ImageSource.camera,
-                    maxNumberOfImages: 4,
-                    availableTools: [PhotoEditTool.crop, PhotoEditTool.draw],
-                    forcedOperationsInOrder: [PhotoEditTool.crop, PhotoEditTool.draw],
+                    maxNumberOfImages: 2,
+                    availableTools: [PhotoEditTool.draw, PhotoEditTool.crop],
+                    forcedOperationsInOrder: [PhotoEditTool.draw, PhotoEditTool.crop],
                     defaultLensDirection: LensDirection.front,
                   ).then((value) {
                     setState(() {

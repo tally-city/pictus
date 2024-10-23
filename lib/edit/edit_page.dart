@@ -5,6 +5,7 @@ import 'package:pictus/edit/forced_operations.dart';
 import 'package:pictus/edit/painter_widget.dart';
 import 'package:pictus/edit/provider/edit_provider.dart';
 import 'package:pictus/pictus.dart';
+import 'package:pictus/styles.dart';
 import 'package:provider/provider.dart';
 
 class EditPage extends StatefulWidget {
@@ -54,7 +55,9 @@ class _EditPageState extends State<EditPage> {
           child: Scaffold(
             appBar: AppBar(
               backgroundColor: Colors.black87,
-              leading: TextButton(
+              automaticallyImplyLeading: false,
+              titleSpacing: 15,
+              title: TextButton(
                 onPressed: context.select<EditProvider, Status>((value) => value.status) == Status.loading
                     ? null
                     : () {
@@ -62,14 +65,8 @@ class _EditPageState extends State<EditPage> {
                           Navigator.pop(context);
                         }
                       },
-                child: const Text(
-                  'Cancel',
-                  style: TextStyle(
-                    color: Colors.white,
-                  ),
-                ),
+                child: const Text('Cancel', style: Styles.textButtonStyle),
               ),
-              leadingWidth: 100,
               actions: [
                 TextButton(
                   onPressed: () => context.read<EditProvider>().onConfirm(
@@ -82,16 +79,13 @@ class _EditPageState extends State<EditPage> {
                             (provider) => provider.pageMode == PageMode.edit && provider.editMode == PhotoEditTool.crop)
                         ? 'Crop'
                         : 'Done',
-                    style: const TextStyle(
-                      color: Colors.white,
-                    ),
+                    style: Styles.textButtonStyle,
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 15),
               ],
             ),
             backgroundColor: Colors.black87,
-            // extendBodyBehindAppBar: true,
             body: Consumer<EditProvider>(
               builder: (context, provider, child) => FutureBuilder(
                 future: provider.image.readAsBytes(),
@@ -190,7 +184,7 @@ class _EditPageState extends State<EditPage> {
     final pageMode = context.read<EditProvider>().pageMode;
     if (status == Status.loading) return false;
 
-    if (pageMode == PageMode.edit) {
+    if (pageMode == PageMode.edit && widget.forcedOperations == null) {
       context.read<EditProvider>().switchPageMode(pageMode: PageMode.preview, editMode: null);
       return false;
     }

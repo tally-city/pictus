@@ -6,6 +6,7 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:image/image.dart' as img;
 import 'package:pictus/edit/edit_page.dart';
+import 'package:pictus/styles.dart';
 
 class CustomGalleryPreview extends StatefulWidget {
   final int? maxWidth;
@@ -85,15 +86,14 @@ class CustomGalleryPreviewState extends State<CustomGalleryPreview> {
       extendBodyBehindAppBar: true,
       backgroundColor: Colors.black87,
       appBar: AppBar(
-        leadingWidth: 100,
+        automaticallyImplyLeading: false,
+        titleSpacing: 15,
         backgroundColor: Colors.transparent,
-        leading: TextButton(
+        title: TextButton(
           onPressed: _isProcessing ? null : () => Navigator.pop(context),
           child: const Text(
             'Cancel',
-            style: TextStyle(
-              color: Colors.white,
-            ),
+            style: Styles.textButtonStyle,
           ),
         ),
         actions: [
@@ -105,13 +105,11 @@ class CustomGalleryPreviewState extends State<CustomGalleryPreview> {
                       _processImages();
                     },
               child: const Text(
-                'Done',
-                style: TextStyle(
-                  color: Colors.white,
-                ),
+                'Confirm',
+                style: Styles.textButtonStyle,
               ),
             ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 15),
         ],
       ),
       body: Container(
@@ -166,7 +164,7 @@ class CustomGalleryPreviewState extends State<CustomGalleryPreview> {
                       child: TextButton.icon(
                         label: const Text(
                           'Edit',
-                          style: TextStyle(color: Colors.white),
+                          style: Styles.textButtonStyle,
                         ),
                         // show delete icon in preview mode
                         onPressed: () async {

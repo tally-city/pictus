@@ -9,6 +9,7 @@ import 'package:pictus/photo_edit_tool.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:pictus/edit/edit_page.dart';
+import 'package:pictus/styles.dart';
 import 'package:provider/provider.dart';
 
 class CustomCameraPreview extends StatefulWidget {
@@ -59,15 +60,14 @@ class CustomCameraPreviewState extends State<CustomCameraPreview> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leadingWidth: 100,
+        automaticallyImplyLeading: false,
         backgroundColor: Colors.transparent,
-        leading: TextButton(
+        titleSpacing: 15,
+        title: TextButton(
           onPressed: () => Navigator.pop(context),
           child: const Text(
             'Cancel',
-            style: TextStyle(
-              color: Colors.white,
-            ),
+            style: Styles.textButtonStyle,
           ),
         ),
         actions: [
@@ -78,12 +78,10 @@ class CustomCameraPreviewState extends State<CustomCameraPreview> {
               },
               child: const Text(
                 'Confirm',
-                style: TextStyle(
-                  color: Colors.white,
-                ),
+                style: Styles.textButtonStyle,
               ),
             ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 15),
         ],
       ),
       extendBodyBehindAppBar: true,
@@ -185,6 +183,7 @@ class CustomCameraPreviewState extends State<CustomCameraPreview> {
                       child: IconButton(
                         visualDensity: VisualDensity.compact,
                         onPressed: () {
+                          if (context.read<CameraProvider>().takingPicture) return;
                           final camera = context.read<CameraProvider>().switchCamera();
                           widget.cameraController.setDescription(camera);
                         },
@@ -314,7 +313,7 @@ class CustomCameraPreviewState extends State<CustomCameraPreview> {
   Future<void> _handleCapture(BuildContext context) async {
     await context.read<CameraProvider>().handleCapture(
           takePicture: widget.cameraController.takePicture,
-          onImageTaken: widget.forcedOperationsInOrder.isEmpty
+          onImageTaken: widget.forcedOperationsInOrder.isEmpty && widget.maxNumberOfImages > 1
               ? null
               : (image) {
                   return Navigator.push(
@@ -324,17 +323,19 @@ class CustomCameraPreviewState extends State<CustomCameraPreview> {
                         image: image,
                         cropRatios: widget.cropRatios,
                         editModes: widget.tools,
-                        forcedOperations: ForcedOperations(
-                          operationsInOrder: widget.forcedOperationsInOrder,
-                          showPreviewAfterOperations: widget.maxNumberOfImages == 1,
-                        ),
+                        forcedOperations: widget.forcedOperationsInOrder.isEmpty
+                            ? null
+                            : ForcedOperations(
+                                operationsInOrder: widget.forcedOperationsInOrder,
+                                showPreviewAfterOperations: widget.maxNumberOfImages == 1,
+                              ),
                       ),
                     ),
                   );
                 },
         );
 
-    if (widget.maxNumberOfImages == 1) {
+    if (widget.maxNumberOfImages == 1 && context.read<CameraProvider>().imageFiles.length == 1) {
       await _processImages();
       return;
     }
