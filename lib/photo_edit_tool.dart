@@ -1,3 +1,4 @@
 enum PhotoEditTool {
   crop,
+  draw
 }
