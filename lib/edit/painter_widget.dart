@@ -59,7 +59,7 @@ class PainterWidgetState extends State<PainterWidget> {
         widget.onPaintFinished(XFile.fromData(
           bytes!,
           lastModified: DateTime.now(),
-          mimeType: 'image/jpeg',
+          mimeType: 'image/png',
           length: bytes.length,
           name: '${DateTime.now().millisecondsSinceEpoch}.jpg',
         ));

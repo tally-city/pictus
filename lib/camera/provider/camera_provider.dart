@@ -51,7 +51,6 @@ class CameraProvider extends ChangeNotifier {
       bytes,
       lastModified: DateTime.now(),
       mimeType: 'image/jpeg',
-      name: takenPicture.name,
       length: bytes.length,
       path: takenPicture.path,
     );
@@ -90,7 +89,10 @@ class CameraProvider extends ChangeNotifier {
           width: image.width > (maxWidth ?? 0) ? maxWidth : image.width,
           height: image.height > (maxHeight ?? 0) ? maxHeight : image.height,
         );
-        final newImage = XFile.fromData(img.encodeJpg(image));
+        final newImage = XFile.fromData(
+          img.encodeJpg(image),
+          mimeType: 'image/jpeg',
+        );
         modifiedImages.add(newImage);
       } else {
         modifiedImages.add(file);

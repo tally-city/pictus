@@ -79,6 +79,9 @@ class Pictus {
       maxHeight: maxHeight,
       maxNumberOfImages: maxNumberOfImages,
     );
+    if ((pickedImages?.length ?? 0) > (maxNumberOfImages ?? 1)) {
+      pickedImages = pickedImages?.sublist(0, maxNumberOfImages);
+    }
     pickedImages = pickedImages?.map((image) => XFile(image.path, mimeType: lookupMimeType(image.path))).toList();
     if (tools.isEmpty || pickedImages == null || pickedImages.isEmpty) {
       return pickedImages;

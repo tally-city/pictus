@@ -51,18 +51,13 @@ class CropperWidgetState extends State<CropperWidget> {
         aspectRatio: _cropRatio.ratio,
         controller: _controller,
         image: widget.bytes,
-        // fixCropRect: true,
         interactive: true,
         onCropped: (value) async {
-          widget.onCropped(
-            XFile.fromData(
-              value,
-              lastModified: DateTime.now(),
-              mimeType: 'image/jpeg',
-              length: value.length,
-              name: '${DateTime.now().millisecondsSinceEpoch}.jpg',
-            ),
-          );
+          widget.onCropped(XFile.fromData(
+            value,
+            lastModified: DateTime.now(),
+            mimeType: 'image/png',
+          ));
         },
       ),
       bottomNavigationBar: Container(

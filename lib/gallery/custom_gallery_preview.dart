@@ -166,7 +166,7 @@ class CustomGalleryPreview extends StatelessWidget {
                         ),
                       // hide images list in preview mode
                       Positioned(
-                        bottom: 70 + safeAreaPadding.bottom,
+                        bottom: 90 + safeAreaPadding.bottom,
                         child: SizedBox(
                           height: 80,
                           width: MediaQuery.sizeOf(context).width,
