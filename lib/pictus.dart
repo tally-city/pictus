@@ -83,7 +83,7 @@ class Pictus {
       pickedImages = pickedImages?.sublist(0, maxNumberOfImages);
     }
     pickedImages = pickedImages?.map((image) => XFile(image.path, mimeType: lookupMimeType(image.path))).toList();
-    if (tools.isEmpty || pickedImages == null || pickedImages.isEmpty) {
+    if ((tools.isEmpty && forcedOperationsInOrder.isEmpty) || pickedImages == null || pickedImages.isEmpty) {
       return pickedImages;
     }
     return showGeneralDialog<List<XFile>>(
