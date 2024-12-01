@@ -62,39 +62,40 @@ class _EditPageState extends State<EditPage> {
             appBar: AppBar(
               backgroundColor: Colors.black87,
               automaticallyImplyLeading: false,
-              titleSpacing: 15,
-              title: TextButton(
-                onPressed: context.select<EditProvider, Status>((value) => value.status) == Status.loading
-                    ? null
-                    : () {
-                        if (_canPop(context)) {
-                          Navigator.pop(context);
-                        }
-                      },
-                child: context.select<EditProvider, Status>((value) => value.status) == Status.loading
-                    ? Container()
-                    : Text(widget.isInMultiImageMode || widget.isFromGallery ? 'Cancel' : 'Retake',
-                        style: Styles.textButtonStyle),
-              ),
-              actions: [
-                if (context.select<EditProvider, Status>((value) => value.status) != Status.loading)
+              title: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: <Widget>[
                   TextButton(
-                    onPressed: () => context.read<EditProvider>().onConfirm(
-                          onFinishedOperation: (image) => Navigator.pop(context, image),
-                          handleCrop: _cropWidget.currentState?.crop,
-                          handleDraw: _painterWidget.currentState?.exportImage,
-                        ),
-                    child: Text(
-                      context.select<EditProvider, bool>((provider) => provider.pageMode == PageMode.edit)
-                          ? context.select<EditProvider, bool>((provider) => provider.editMode == PhotoEditTool.crop)
-                              ? 'Crop'
-                              : 'OK'
-                          : 'Done',
-                      style: Styles.textButtonStyle,
-                    ),
+                    onPressed: context.select<EditProvider, Status>((value) => value.status) == Status.loading
+                        ? null
+                        : () {
+                            if (_canPop(context)) {
+                              Navigator.pop(context);
+                            }
+                          },
+                    child: context.select<EditProvider, Status>((value) => value.status) == Status.loading
+                        ? Container()
+                        : Text(widget.isInMultiImageMode || widget.isFromGallery ? 'Cancel' : 'Retake',
+                            style: Styles.textButtonStyle),
                   ),
-                const SizedBox(width: 15),
-              ],
+                  if (context.select<EditProvider, Status>((value) => value.status) != Status.loading)
+                    TextButton(
+                      onPressed: () => context.read<EditProvider>().onConfirm(
+                            onFinishedOperation: (image) => Navigator.pop(context, image),
+                            handleCrop: _cropWidget.currentState?.crop,
+                            handleDraw: _painterWidget.currentState?.exportImage,
+                          ),
+                      child: Text(
+                        context.select<EditProvider, bool>((provider) => provider.pageMode == PageMode.edit)
+                            ? context.select<EditProvider, bool>((provider) => provider.editMode == PhotoEditTool.crop)
+                                ? 'Crop'
+                                : 'OK'
+                            : 'Done',
+                        style: Styles.textButtonStyle,
+                      ),
+                    )
+                ],
+              ),
             ),
             backgroundColor: Colors.black87,
             body: Consumer<EditProvider>(

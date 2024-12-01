@@ -82,30 +82,31 @@ class CustomGalleryPreview extends StatelessWidget {
           backgroundColor: Colors.black87,
           appBar: AppBar(
             automaticallyImplyLeading: false,
-            titleSpacing: 15,
             backgroundColor: Colors.transparent,
-            title: TextButton(
-              onPressed: provider.isProcessing ? null : () => Navigator.pop(context),
-              child: const Text(
-                'Cancel',
-                style: Styles.textButtonStyle,
-              ),
-            ),
-            actions: [
-              if (provider.imageFiles.isNotEmpty)
+            title: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: <Widget>[
                 TextButton(
-                  onPressed: provider.isProcessing
-                      ? null
-                      : () {
-                          _processImages(context);
-                        },
+                  onPressed: provider.isProcessing ? null : () => Navigator.pop(context),
                   child: const Text(
-                    'Confirm',
+                    'Cancel',
                     style: Styles.textButtonStyle,
                   ),
                 ),
-              const SizedBox(width: 15),
-            ],
+                if (provider.imageFiles.isNotEmpty)
+                  TextButton(
+                    onPressed: provider.isProcessing
+                        ? null
+                        : () {
+                            _processImages(context);
+                          },
+                    child: const Text(
+                      'Confirm',
+                      style: Styles.textButtonStyle,
+                    ),
+                  ),
+              ],
+            ),
           ),
           body: Container(
             width: double.infinity,

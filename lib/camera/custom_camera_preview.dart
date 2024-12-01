@@ -66,27 +66,28 @@ class CustomCameraPreviewState extends State<CustomCameraPreview> {
       appBar: AppBar(
         automaticallyImplyLeading: false,
         backgroundColor: Colors.transparent,
-        titleSpacing: 15,
-        title: TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text(
-            'Cancel',
-            style: Styles.textButtonStyle,
-          ),
-        ),
-        actions: [
-          if (context.select<CameraProvider, bool>((value) => value.images.isNotEmpty))
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: <Widget>[
             TextButton(
-              onPressed: () {
-                _processImages();
-              },
+              onPressed: () => Navigator.pop(context),
               child: const Text(
-                'Confirm',
+                'Cancel',
                 style: Styles.textButtonStyle,
               ),
             ),
-          const SizedBox(width: 15),
-        ],
+            if (context.select<CameraProvider, bool>((value) => value.images.isNotEmpty))
+              TextButton(
+                onPressed: () {
+                  _processImages();
+                },
+                child: const Text(
+                  'Confirm',
+                  style: Styles.textButtonStyle,
+                ),
+              )
+          ],
+        ),
       ),
       extendBodyBehindAppBar: true,
       body: Container(
