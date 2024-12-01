@@ -10,16 +10,21 @@ import 'package:provider/provider.dart';
 
 class EditPage extends StatefulWidget {
   const EditPage({
-    required this.image,
+    required this.imageBytes,
+    required this.isInMultiImageMode,
+    required this.isFromGallery,
     this.cropRatios = const [],
     this.editModes = const [],
     this.forcedOperations,
     super.key,
   });
-  final XFile image;
+
+  final Uint8List imageBytes;
   final List<CropRatio> cropRatios;
   final List<PhotoEditTool> editModes;
   final ForcedOperations? forcedOperations;
+  final bool isInMultiImageMode;
+  final bool isFromGallery;
 
   @override
   State<EditPage> createState() => _EditPageState();
@@ -38,7 +43,7 @@ class _EditPageState extends State<EditPage> {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => EditProvider(
-        initialImage: widget.image,
+        initialImage: widget.imageBytes,
         forcedOperations: widget.forcedOperations,
         onForcedOperationFinished: (image) => Navigator.pop(context, image),
       ),
@@ -66,23 +71,28 @@ class _EditPageState extends State<EditPage> {
                           Navigator.pop(context);
                         }
                       },
-                child: const Text('Cancel', style: Styles.textButtonStyle),
+                child: context.select<EditProvider, Status>((value) => value.status) == Status.loading
+                    ? Container()
+                    : Text(widget.isInMultiImageMode || widget.isFromGallery ? 'Cancel' : 'Retake',
+                        style: Styles.textButtonStyle),
               ),
               actions: [
-                TextButton(
-                  onPressed: () => context.read<EditProvider>().onConfirm(
-                        onFinishedOperation: (image) => Navigator.pop(context, image),
-                        handleCrop: _cropWidget.currentState?.crop,
-                        handleDraw: _painterWidget.currentState?.exportImage,
-                      ),
-                  child: Text(
-                    context.select<EditProvider, bool>(
-                            (provider) => provider.pageMode == PageMode.edit && provider.editMode == PhotoEditTool.crop)
-                        ? 'Crop'
-                        : 'Done',
-                    style: Styles.textButtonStyle,
+                if (context.select<EditProvider, Status>((value) => value.status) != Status.loading)
+                  TextButton(
+                    onPressed: () => context.read<EditProvider>().onConfirm(
+                          onFinishedOperation: (image) => Navigator.pop(context, image),
+                          handleCrop: _cropWidget.currentState?.crop,
+                          handleDraw: _painterWidget.currentState?.exportImage,
+                        ),
+                    child: Text(
+                      context.select<EditProvider, bool>((provider) => provider.pageMode == PageMode.edit)
+                          ? context.select<EditProvider, bool>((provider) => provider.editMode == PhotoEditTool.crop)
+                              ? 'Crop'
+                              : 'OK'
+                          : 'Done',
+                      style: Styles.textButtonStyle,
+                    ),
                   ),
-                ),
                 const SizedBox(width: 15),
               ],
             ),
@@ -90,51 +100,42 @@ class _EditPageState extends State<EditPage> {
             body: Consumer<EditProvider>(
               builder: (context, provider, child) {
                 if (provider.status == Status.loading) {
-                  return Center(child: CircularProgressIndicator());
+                  return const Center(
+                    child: CircularProgressIndicator(),
+                  );
                 }
-                return FutureBuilder(
-                  future: provider.image.readAsBytes(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.done) {
-                      if (snapshot.hasData) {
-                        switch (provider.pageMode) {
-                          case PageMode.preview:
-                            return Center(
-                              child: Image.memory(
-                                snapshot.data!,
-                                width: double.infinity,
-                                fit: BoxFit.cover,
-                              ),
-                            );
-                          case PageMode.edit:
-                            switch (provider.editMode) {
-                              case null:
-                                return Container();
-                              case PhotoEditTool.crop:
-                                return CropperWidget(
-                                  key: _cropWidget,
-                                  bytes: snapshot.data!,
-                                  cropRatios: widget.cropRatios,
-                                  onCropped: (croppedImage) => provider.onOperationFinished(
-                                    croppedImage,
-                                  ),
-                                );
-                              case PhotoEditTool.draw:
-                                return PainterWidget(
-                                  key: _painterWidget,
-                                  bytes: snapshot.data!,
-                                  onPaintFinished: (paintedImage) => provider.onOperationFinished(
-                                    paintedImage,
-                                  ),
-                                );
-                            }
-                        }
-                      }
-                      return const Center(child: Text('Failed to load image'));
+
+                switch (provider.pageMode) {
+                  case PageMode.preview:
+                    return Center(
+                      child: Image.memory(
+                        widget.imageBytes,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
+                    );
+                  case PageMode.edit:
+                    switch (provider.editMode) {
+                      case null:
+                        return Container();
+                      case PhotoEditTool.crop:
+                        return CropperWidget(
+                          key: _cropWidget, imageBytes: widget.imageBytes, // Use cached bytes
+                          cropRatios: widget.cropRatios,
+                          onCropped: (croppedImageBytes) => provider.onOperationFinished(
+                            croppedImageBytes,
+                          ),
+                        );
+                      case PhotoEditTool.draw:
+                        return PainterWidget(
+                          key: _painterWidget,
+                          imageBytes: widget.imageBytes,
+                          onPaintFinished: (paintedImageBytes) => provider.onOperationFinished(
+                            paintedImageBytes,
+                          ),
+                        );
                     }
-                    return const Center(child: CircularProgressIndicator());
-                  },
-                );
+                }
               },
             ),
             bottomNavigationBar: context.select<EditProvider, PageMode>((value) => value.pageMode) == PageMode.edit

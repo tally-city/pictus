@@ -9,14 +9,14 @@ class CropperWidget extends StatefulWidget {
     super.key,
     this.controller,
     this.cropRatios = const [],
-    required this.bytes,
+    required this.imageBytes,
     required this.onCropped,
   });
 
   final List<CropRatio> cropRatios;
-  final Uint8List bytes;
+  final Uint8List imageBytes;
   final CropController? controller;
-  final void Function(XFile file) onCropped;
+  final void Function(Uint8List imageBytes) onCropped;
 
   @override
   State<CropperWidget> createState() => CropperWidgetState();
@@ -45,20 +45,19 @@ class CropperWidgetState extends State<CropperWidget> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black87,
-      body: Crop(
-        baseColor: Colors.black87,
-        initialSize: .9,
-        aspectRatio: _cropRatio.ratio,
-        controller: _controller,
-        image: widget.bytes,
-        interactive: true,
-        onCropped: (value) async {
-          widget.onCropped(XFile.fromData(
-            value,
-            lastModified: DateTime.now(),
-            mimeType: 'image/png',
-          ));
-        },
+      body: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Crop(
+          baseColor: Colors.black87,
+          aspectRatio: _cropRatio.ratio,
+          controller: _controller,
+          image: widget.imageBytes,
+          clipBehavior: Clip.antiAlias,
+          interactive: false,
+          onCropped: (imageBytes) {
+            widget.onCropped(imageBytes);
+          },
+        ),
       ),
       bottomNavigationBar: Container(
         height: 80,

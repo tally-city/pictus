@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:image/image.dart' as img;
@@ -8,7 +10,7 @@ class CameraProvider extends ChangeNotifier {
     required this.cameras,
   }) : cameraIndex = initialCameraIndex;
 
-  List<XFile> imageFiles = [];
+  List<Uint8List> images = [];
   bool takingPicture = false;
   int cameraIndex;
   double baseScaleFactor = 1.0;
@@ -27,75 +29,64 @@ class CameraProvider extends ChangeNotifier {
 
   void setCameraIndex(int index) => setWithNotify(() => cameraIndex = index);
 
-  void setImageAtIndex(int index, XFile editedImage) => setWithNotify(() {
-        imageFiles = [...imageFiles];
-        imageFiles[index] = editedImage;
+  void setImageAtIndex(int index, Uint8List editedImage) => setWithNotify(() {
+        images = [...images];
+        images[index] = editedImage;
       });
 
   void removeImageAtIndex(int index) => setWithNotify(
-        () => imageFiles = [...imageFiles]..removeAt(index),
+        () => images = [...images]..removeAt(index),
       );
 
   Future<void> handleCapture({
     required Future<XFile> Function() takePicture,
-    required Future<XFile?> Function(XFile)? onImageTaken,
+    required Future<Uint8List?> Function(Uint8List)? onImageTaken,
   }) async {
     takingPicture = true;
     notifyListeners();
 
     final takenPicture = await takePicture();
-
-    final bytes = await takenPicture.readAsBytes();
-
-    final newImage = XFile.fromData(
-      bytes,
-      lastModified: DateTime.now(),
-      mimeType: 'image/jpeg',
-      length: bytes.length,
-      path: takenPicture.path,
-    );
-    imageFiles = [...imageFiles, newImage];
+    var newImageBytes = await takenPicture.readAsBytes();
+    images = [...images, newImageBytes];
     takingPicture = false;
     notifyListeners();
 
     if (onImageTaken != null) {
-      final editedImage = await onImageTaken(newImage);
+      final editedImage = await onImageTaken(newImageBytes);
       if (editedImage != null) {
-        imageFiles = [...imageFiles];
-        imageFiles.removeLast();
-        imageFiles = [...imageFiles, editedImage];
+        images = [...images];
+        images.removeLast();
+        images = [...images, editedImage];
       } else {
-        imageFiles = [...imageFiles];
-        imageFiles.removeLast();
+        images = [...images];
+        images.removeLast();
       }
       notifyListeners();
     }
   }
 
   Future<void> processImages({
-    required void Function(List<XFile> modifiedImages) onProcessFinished,
+    required void Function(List<Uint8List> modifiedImages) onProcessFinished,
     int? maxWidth,
     int? maxHeight,
   }) async {
     isProcessing = true;
     notifyListeners();
 
-    final modifiedImages = <XFile>[];
-    for (final file in imageFiles) {
+    final modifiedImages = <Uint8List>[];
+    for (final imageBytes in images) {
       if (maxHeight != null || maxWidth != null) {
-        var image = img.decodeImage(await file.readAsBytes())!;
-        image = img.copyResize(
-          image,
-          width: image.width > (maxWidth ?? 0) ? maxWidth : image.width,
-          height: image.height > (maxHeight ?? 0) ? maxHeight : image.height,
-        );
-        final newImage = XFile.fromData(
-          img.encodeJpg(image),
-          mimeType: 'image/jpeg',
-        );
-        modifiedImages.add(newImage);
+        var image = img.decodeImage(imageBytes)!;
+        var newImageBytes = img
+            .copyResize(
+              image,
+              width: image.width > (maxWidth ?? 0) ? maxWidth : image.width,
+              height: image.height > (maxHeight ?? 0) ? maxHeight : image.height,
+            )
+            .toUint8List();
+        modifiedImages.add(newImageBytes);
       } else {
-        modifiedImages.add(file);
+        modifiedImages.add(imageBytes);
       }
     }
 

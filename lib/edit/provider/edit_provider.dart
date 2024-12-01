@@ -1,13 +1,15 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:pictus/edit/forced_operations.dart';
 import 'package:pictus/pictus.dart';
 
 class EditProvider extends ChangeNotifier {
   EditProvider({
-    required XFile initialImage,
+    required Uint8List initialImage,
     this.forcedOperations,
     this.onForcedOperationFinished,
-  }) : image = initialImage {
+  }) : imageBytes = initialImage {
     if (forcedOperations != null) {
       forcedOperationStep = 0;
       pageMode = PageMode.edit;
@@ -15,13 +17,13 @@ class EditProvider extends ChangeNotifier {
     }
   }
 
-  XFile image;
+  Uint8List imageBytes;
   Status status = Status.loaded;
   PageMode pageMode = PageMode.preview;
   PhotoEditTool? editMode;
   int? forcedOperationStep;
   final ForcedOperations? forcedOperations;
-  final void Function(XFile image)? onForcedOperationFinished;
+  final void Function(Uint8List imageBytes)? onForcedOperationFinished;
 
   void switchPageMode({PageMode? pageMode, PhotoEditTool? editMode}) {
     this.pageMode = pageMode ?? this.pageMode;
@@ -30,13 +32,13 @@ class EditProvider extends ChangeNotifier {
   }
 
   void onConfirm({
-    required void Function(XFile image) onFinishedOperation,
+    required void Function(Uint8List imageBytes) onFinishedOperation,
     required void Function()? handleCrop,
     required void Function()? handleDraw,
   }) {
     switch (pageMode) {
       case PageMode.preview:
-        onFinishedOperation(image);
+        onFinishedOperation(imageBytes);
       case PageMode.edit:
         status = Status.loading;
         notifyListeners();
@@ -53,10 +55,10 @@ class EditProvider extends ChangeNotifier {
     }
   }
 
-  void onOperationFinished(XFile? image) {
+  void onOperationFinished(Uint8List? imageBytes) {
     status = Status.loaded;
-    if (image != null) {
-      this.image = image;
+    if (imageBytes != null) {
+      this.imageBytes = imageBytes;
     }
 
     notifyListeners();
@@ -65,7 +67,7 @@ class EditProvider extends ChangeNotifier {
       pageMode = PageMode.preview;
       if (!(forcedOperations?.showPreviewAfterOperations ?? true)) {
         // if we should skip the preview, we do the on finished operations func (pop the route with latest image)
-        onForcedOperationFinished?.call(this.image);
+        onForcedOperationFinished?.call(this.imageBytes);
       }
     } else {
       // else we switch to the next operation step

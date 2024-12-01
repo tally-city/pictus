@@ -1,12 +1,14 @@
 library pictus;
 
+import 'dart:typed_data';
+
+import 'package:camera/camera.dart';
+import 'package:flutter/material.dart';
 import 'package:pictus/crop_ratio.dart';
+import 'package:pictus/edit/edit_page.dart';
 import 'package:pictus/edit/forced_operations.dart';
 import 'package:pictus/gallery/provider/custom_gallery_provider.dart';
 import 'package:pictus/photo_edit_tool.dart';
-import 'package:camera/camera.dart';
-import 'package:flutter/material.dart';
-import 'package:pictus/edit/edit_page.dart';
 import 'package:pictus/styles.dart';
 import 'package:provider/provider.dart';
 
@@ -31,15 +33,28 @@ class CustomGalleryPreview extends StatelessWidget {
           final editedImage = await Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => EditPage(
-                cropRatios: cropRatios,
-                image: initialImages[0],
-                editModes: availableTools,
-                forcedOperations: ForcedOperations(
-                  operationsInOrder: forcedOperationsInOrder,
-                  showPreviewAfterOperations: true,
-                ),
-                // forceCrops: true,
+              builder: (context) => FutureBuilder<Uint8List>(
+                future: initialImages[0].readAsBytes(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (snapshot.hasError) {
+                    return const Center(child: Text('Failed to load image'));
+                  }
+
+                  return EditPage(
+                    cropRatios: cropRatios,
+                    imageBytes: snapshot.data!,
+                    editModes: availableTools,
+                    forcedOperations: ForcedOperations(
+                      operationsInOrder: forcedOperationsInOrder,
+                      showPreviewAfterOperations: true,
+                    ),
+                    isInMultiImageMode: initialImages.length > 1,
+                    isFromGallery: true,
+                  );
+                },
               ),
             ),
           );
@@ -144,19 +159,20 @@ class CustomGalleryPreview extends StatelessWidget {
                             ),
                             // show delete icon in preview mode
                             onPressed: () async {
+                              var imageBytes = await provider.imageFiles[provider.previewImageIndex].readAsBytes();
                               final editedImage = await Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => EditPage(
                                     cropRatios: cropRatios,
-                                    image: provider.imageFiles[provider.previewImageIndex],
+                                    imageBytes: imageBytes,
                                     editModes: availableTools,
+                                    isInMultiImageMode: initialImages.length > 1,
+                                    isFromGallery: true,
                                   ),
                                 ),
                               );
-                              if (editedImage is XFile) {
-                                provider.setImageAtIndex(provider.previewImageIndex, editedImage);
-                              }
+                              provider.setImageAtIndex(provider.previewImageIndex, editedImage);
                             },
                             icon: const Icon(
                               Icons.edit,
