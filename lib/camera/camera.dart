@@ -102,6 +102,8 @@ class CameraState extends State<Camera> {
       imageFormatGroup: ImageFormatGroup.jpeg,
     );
     _controller?.setFlashMode(FlashMode.auto);
+    _controller?.setFocusMode(FocusMode.auto);
+    _controller?.setExposureMode(ExposureMode.auto);
 
     try {
       await _controller?.initialize();
