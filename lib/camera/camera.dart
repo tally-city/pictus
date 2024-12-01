@@ -2,15 +2,14 @@ library pictus;
 
 import 'dart:developer';
 
+import 'package:camera/camera.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:pictus/camera/custom_camera_preview.dart';
 import 'package:pictus/camera/provider/camera_provider.dart';
 import 'package:pictus/crop_ratio.dart';
 import 'package:pictus/lens_direction.dart';
 import 'package:pictus/photo_edit_tool.dart';
-import 'package:camera/camera.dart';
-import 'package:flutter/material.dart';
-
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 class Camera extends StatefulWidget {
@@ -98,7 +97,7 @@ class CameraState extends State<Camera> {
     }
     _controller = CameraController(
       cameraDescription,
-      ResolutionPreset.low,
+      ResolutionPreset.max,
       enableAudio: false,
       imageFormatGroup: ImageFormatGroup.jpeg,
     );
