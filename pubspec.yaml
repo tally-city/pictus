@@ -1,7 +1,7 @@
 name: pictus
-description: "A new Flutter package project."
-version: 0.0.1
-homepage: https://tally.city/
+description: A Flutter library for taking pictures, selecting images, cropping, and drawing on them. Provides customizable tools for precise editing.
+version: 0.1.0
+homepage: https://github.com/tally-city/pictus
 
 environment:
   sdk: '>=3.5.3 <4.0.0'

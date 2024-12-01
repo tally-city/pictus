@@ -11,7 +11,7 @@ and the Flutter guide for
 [developing packages and plugins](https://flutter.dev/developing-packages).
 -->
 
-Simple and useful flutter library for picking/editing images on the go.
+A Flutter library for taking pictures, selecting images, cropping, and drawing on them. Provides customizable tools for precise editing.
 
 ## Features
 
@@ -35,19 +35,17 @@ List<XFile> images;
 
 // then in some button press or other interaction
 Pictus.pickImage(
-  context,
-  maxHeight: 1000,
-  maxWidth: 1000,
-  source: ImageSource.gallery,
-  tools: [PhotoEditTool.crop],
-  maxNumberOfImages: 3,
+    context,
+    maxHeight: 1000,
+    maxWidth: 1000,
+    source: ImageSource.gallery,
+    availableTools: [PhotoEditTool.crop, PhotoEditTool.draw],
+    forcedOperationsInOrder: [PhotoEditTool.crop, PhotoEditTool.draw],
+    maxNumberOfImages: 3,
 ).then((value) {
-  setState(() {
-    if (value != null) images = value;
-  });
+    setState(() {
+      if (value != null)
+        images = value;
+    });
 });
 ```
-
-## Additional information
-
-To be filled in the future
