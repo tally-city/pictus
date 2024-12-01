@@ -2,16 +2,23 @@ library pictus;
 
 import 'dart:io';
 
+import 'package:mime/mime.dart';
 import 'package:pictus/camera/camera.dart';
+import 'package:pictus/crop_ratio.dart';
 import 'package:pictus/gallery/custom_gallery_preview.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:pictus/lens_direction.dart';
 import 'photo_edit_tool.dart';
 
 export 'photo_edit_tool.dart';
 
 export 'package:image_picker/image_picker.dart' show XFile, ImageSource;
+
+export 'package:pictus/lens_direction.dart';
+
+export 'package:pictus/crop_ratio.dart';
 
 class Pictus {
   static Future<List<XFile>?> pickImage(
@@ -20,19 +27,29 @@ class Pictus {
     int? maxWidth,
     int? maxHeight,
     int maxNumberOfImages = 1,
-    List<PhotoEditTool> tools = const [],
+    List<PhotoEditTool> availableTools = const [],
+    List<PhotoEditTool> forcedOperationsInOrder = const [],
+    List<CropRatio> cropRatios = const [],
+    LensDirection defaultLensDirection = LensDirection.back,
   }) {
+    if (kIsWeb) {
+      availableTools.removeWhere((element) => element == PhotoEditTool.draw);
+      forcedOperationsInOrder.removeWhere((element) => element == PhotoEditTool.draw);
+    }
     switch (source) {
       case ImageSource.camera:
         if (!kIsWeb && !Platform.isAndroid && !Platform.isIOS) {
-          throw Exception('Capture is not supported on this platform');
+          throw Exception('Camera is not supported on this platform');
         }
         return _capture(
           context: context,
           maxWidth: maxWidth,
           maxHeight: maxHeight,
           maxNumberOfImages: maxNumberOfImages,
-          tools: tools,
+          availableTools: availableTools,
+          forcedOperationsInOrder: forcedOperationsInOrder,
+          cropRatios: cropRatios,
+          defaultLensDirection: defaultLensDirection,
         );
       case ImageSource.gallery:
         return _pickAndEdit(
@@ -40,7 +57,9 @@ class Pictus {
           maxNumberOfImages: maxNumberOfImages,
           maxHeight: maxHeight,
           maxWidth: maxWidth,
-          tools: tools,
+          tools: availableTools,
+          forcedOperationsInOrder: forcedOperationsInOrder,
+          cropRatios: cropRatios,
         );
     }
   }
@@ -51,14 +70,20 @@ class Pictus {
     int? maxWidth,
     int? maxHeight,
     List<PhotoEditTool> tools = const [],
+    List<PhotoEditTool> forcedOperationsInOrder = const [],
+    List<CropRatio> cropRatios = const [],
   }) async {
-    final pickedImages = await _pick(
+    var pickedImages = await _pick(
       context,
-      maxWidth: tools.isNotEmpty ? null : maxWidth,
-      maxHeight: tools.isNotEmpty ? null : maxHeight,
+      maxWidth: maxWidth,
+      maxHeight: maxHeight,
       maxNumberOfImages: maxNumberOfImages,
     );
-    if (tools.isEmpty || pickedImages == null || pickedImages.isEmpty) {
+    if ((pickedImages?.length ?? 0) > (maxNumberOfImages ?? 1)) {
+      pickedImages = pickedImages?.sublist(0, maxNumberOfImages);
+    }
+    pickedImages = pickedImages?.map((image) => XFile(image.path, mimeType: lookupMimeType(image.path))).toList();
+    if ((tools.isEmpty && forcedOperationsInOrder.isEmpty) || pickedImages == null || pickedImages.isEmpty) {
       return pickedImages;
     }
     return showGeneralDialog<List<XFile>>(
@@ -67,10 +92,10 @@ class Pictus {
       barrierDismissible: false,
       pageBuilder: (_, __, ___) => Material(
         child: CustomGalleryPreview(
-          maxWidth: maxWidth,
-          maxHeight: maxHeight,
-          initialImages: pickedImages,
-          tools: tools,
+          initialImages: pickedImages!,
+          forcedOperationsInOrder: maxNumberOfImages == 1 ? forcedOperationsInOrder : [],
+          availableTools: tools,
+          cropRatios: cropRatios,
         ),
       ),
     );
@@ -103,7 +128,10 @@ class Pictus {
     int? maxWidth,
     int? maxHeight,
     int maxNumberOfImages = 1,
-    List<PhotoEditTool> tools = const [],
+    List<PhotoEditTool> availableTools = const [],
+    List<PhotoEditTool> forcedOperationsInOrder = const [],
+    List<CropRatio> cropRatios = const [],
+    LensDirection defaultLensDirection = LensDirection.front,
   }) {
     return showGeneralDialog<List<XFile>>(
       context: context,
@@ -113,8 +141,10 @@ class Pictus {
           maxWidth: maxWidth,
           maxHeight: maxHeight,
           maxNumberOfImages: maxNumberOfImages,
-          canPop: true,
-          tools: tools,
+          availableTools: availableTools,
+          forcedOperationsInOrder: forcedOperationsInOrder,
+          cropRatios: cropRatios,
+          defaultLensDirection: defaultLensDirection,
         ),
       ),
     );
