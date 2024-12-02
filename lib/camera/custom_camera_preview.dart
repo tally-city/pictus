@@ -421,11 +421,9 @@ class CustomCameraPreviewState extends State<CustomCameraPreview> {
           maxHeight: widget.maxHeight,
           maxWidth: widget.maxWidth,
           onProcessFinished: (modifiedImages) {
-            List<XFile> imageFiles = [];
-            for (var imageBytes in modifiedImages) {
-              imageFiles.add(XFile.fromData(imageBytes));
+            if (mounted) {
+              Navigator.pop(context, modifiedImages.map((imageBytes) => XFile.fromData(imageBytes)).toList());
             }
-            if (mounted) Navigator.pop(context, imageFiles);
           },
         );
   }
