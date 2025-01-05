@@ -33,8 +33,8 @@ class Pictus {
     LensDirection defaultLensDirection = LensDirection.back,
   }) {
     if (kIsWeb) {
-      availableTools.removeWhere((element) => element == PhotoEditTool.draw);
-      forcedOperationsInOrder.removeWhere((element) => element == PhotoEditTool.draw);
+      if(availableTools.isNotEmpty) availableTools.removeWhere((element) => element == PhotoEditTool.draw);
+      if(forcedOperationsInOrder.isNotEmpty) forcedOperationsInOrder.removeWhere((element) => element == PhotoEditTool.draw);
     }
     switch (source) {
       case ImageSource.camera:
