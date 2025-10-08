@@ -45,20 +45,31 @@ class CropperWidgetState extends State<CropperWidget> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black87,
-      body: Crop(
-        baseColor: Colors.black87,
-        initialSize: .9,
-        aspectRatio: _cropRatio.ratio,
-        controller: _controller,
-        image: widget.bytes,
-        interactive: true,
-        onCropped: (value) async {
-          widget.onCropped(XFile.fromData(
-            value,
-            lastModified: DateTime.now(),
-            mimeType: 'image/png',
-          ));
-        },
+      body: Center(
+        child: SizedBox(
+          width: MediaQuery.of(context).size.width > 380 ? 380 : MediaQuery.of(context).size.width,
+          height: MediaQuery.of(context).size.height > 380 ? 380 : MediaQuery.of(context).size.height,
+          child: Center(
+            child: Crop(
+              baseColor: Colors.black87,
+              aspectRatio: _cropRatio.ratio,
+              controller: _controller,
+              image: widget.bytes,
+              interactive: true,
+              onCropped: (result) async {
+                switch (result) {
+                  case CropSuccess(:final croppedImage):
+                    widget.onCropped(XFile.fromData(
+                      croppedImage,
+                      lastModified: DateTime.now(),
+                      mimeType: 'image/png',
+                    ));
+                  case CropFailure():
+                }
+              },
+            ),
+          ),
+        ),
       ),
       bottomNavigationBar: Container(
         height: 80,
