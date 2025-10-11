@@ -43,12 +43,18 @@ class CropperWidgetState extends State<CropperWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final cropSize = size.width > 600
+        ? 500 // desktop/laptop
+        : size.width > 380
+            ? 380 // tablets
+            : size.width * 0.9; // small screens (mobile)
     return Scaffold(
       backgroundColor: Colors.black87,
       body: Center(
         child: SizedBox(
-          width: MediaQuery.of(context).size.width > 380 ? 380 : MediaQuery.of(context).size.width,
-          height: MediaQuery.of(context).size.height > 380 ? 380 : MediaQuery.of(context).size.height,
+          width: cropSize.toDouble(),
+          height: cropSize.toDouble(),
           child: Center(
             child: Crop(
               baseColor: Colors.black87,
