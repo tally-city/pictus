@@ -43,22 +43,39 @@ class CropperWidgetState extends State<CropperWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final cropSize = size.width > 600
+        ? 500 // desktop/laptop
+        : size.width > 380
+            ? 380 // tablets
+            : size.width * 0.9; // small screens (mobile)
     return Scaffold(
       backgroundColor: Colors.black87,
-      body: Crop(
-        baseColor: Colors.black87,
-        initialSize: .9,
-        aspectRatio: _cropRatio.ratio,
-        controller: _controller,
-        image: widget.bytes,
-        interactive: true,
-        onCropped: (value) async {
-          widget.onCropped(XFile.fromData(
-            value,
-            lastModified: DateTime.now(),
-            mimeType: 'image/png',
-          ));
-        },
+      body: Center(
+        child: SizedBox(
+          width: cropSize.toDouble(),
+          height: cropSize.toDouble(),
+          child: Center(
+            child: Crop(
+              baseColor: Colors.black87,
+              aspectRatio: _cropRatio.ratio,
+              controller: _controller,
+              image: widget.bytes,
+              interactive: true,
+              onCropped: (result) async {
+                switch (result) {
+                  case CropSuccess(:final croppedImage):
+                    widget.onCropped(XFile.fromData(
+                      croppedImage,
+                      lastModified: DateTime.now(),
+                      mimeType: 'image/png',
+                    ));
+                  case CropFailure():
+                }
+              },
+            ),
+          ),
+        ),
       ),
       bottomNavigationBar: Container(
         height: 80,
