@@ -108,8 +108,17 @@ class CameraState extends State<Camera> {
       await _controller?.initialize();
     } on CameraException catch (e) {
       log('Camera Error ${e.code}: ${e.description}');
+      final error = e.description ?? "Camera Error";
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            error,
+          ),
+        ),
+      );
+
       setState(() {
-        _cameraError = e.description ?? "Camera Error";
+        _cameraError = error;
       });
     }
     try {
